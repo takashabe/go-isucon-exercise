@@ -1,8 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"html/template"
 	"net/http"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type IndexPage struct {
@@ -23,6 +26,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		// better to redirect to the error page
 		panic(err)
 	}
+}
+
+func connect() {
+	db, err := sql.Open("mysql", "isucon@/isucon")
+	if err != nil {
+		panic(err.Error())
+	}
+	defer db.Close()
 }
 
 func main() {

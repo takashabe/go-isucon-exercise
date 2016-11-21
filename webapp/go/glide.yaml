@@ -1,0 +1,4 @@
+package: github.com/takashabe/go-isucon-exercise/webapp/go
+import:
+- package: github.com/go-sql-driver/mysql
+  version: ^1.2.0
