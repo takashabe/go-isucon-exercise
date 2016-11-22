@@ -1,5 +1,5 @@
 CREATE USER 'isucon';
-GRANT ALL PRIVILEGES ON *.* TO 'isucon'@'localhost';
+GRANT ALL PRIVILEGES ON *.* TO 'isucon'@'%';
 
 CREATE DATABASE isucon DEFAULT CHARACTER SET = utf8 COLLATE utf8_general_ci;
 USE isucon;
