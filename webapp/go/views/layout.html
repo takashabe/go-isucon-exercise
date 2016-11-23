@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>{{.Title}}</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <title>Isutter</title>
   </head>
-  <body>
-    {{.Title}}, {{.Body}}
-  </body>
+  {{template "content" .}}
 </html>

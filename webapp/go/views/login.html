@@ -1,0 +1,23 @@
+{{ define "content" }}
+<h1 class="jumbotron"><a href="/">Isutter</a></h1>
+
+<h2>Isutter login</h2>
+
+<div class="text-danger" id="logout-message">{{.Message}}</div>
+
+<div id="login-form">
+  <form method="POST" action="/login">
+    <div class="col-md-4 input-group">
+      <span class="input-group-addon">E-mail</span>
+      <input class="form-control" type="text" name="email" placeholder="E-mail address" />
+    </div>
+    <div class="col-md-4 input-group">
+      <span class="input-group-addon">パスワード</span>
+      <input class="form-control" type="password" name="password" />
+    </div>
+    <div class="col-md-1 input-group">
+      <input class="btn btn-default" type="submit" name="Login" value="Login" />
+    </div>
+  </form>
+</div>
+{{ end }}
