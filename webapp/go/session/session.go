@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"sync"
 	"time"
-
-	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
 )
 
 type Manager struct {
@@ -42,7 +40,7 @@ func NewManager(provideName, cookieName string, maxLifeTime int64) (*Manager, er
 	return &Manager{provider: provider, cookieName: cookieName, maxLifeTime: maxLifeTime}, nil
 }
 
-var globalSessions *session.Manager
+// var globalSessions *Session.Manager
 
 var provides = make(map[string]Provider)
 
@@ -51,7 +49,7 @@ func Register(name string, provider Provider) {
 		panic("session: Register provider is nil")
 	}
 
-	if _, dup := provider[name]; dup {
+	if _, dup := provides[name]; dup {
 		panic("session: Register called twice for provide " + name)
 	}
 	provides[name] = provider
@@ -62,7 +60,7 @@ func (manager *Manager) sessionId() string {
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return ""
 	}
-	return base64.URLEncoding.DecodeString(b)
+	return base64.URLEncoding.EncodeToString(b)
 }
 
 func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
@@ -75,7 +73,7 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 		session, _ = manager.provider.SessionInit(sid)
 		cookie := http.Cookie{
 			Name:     manager.cookieName,
-			Value:    url.QueryEscape(uid),
+			Value:    url.QueryEscape(sid),
 			Path:     "/",
 			HttpOnly: true,
 			MaxAge:   int(manager.maxLifeTime),
@@ -100,7 +98,8 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) e
 	// update cookie
 	cookie.Expires = time.Now()
 	cookie.MaxAge = -1
-	http.SetCookie(w, &cookie)
+	http.SetCookie(w, cookie)
+	return nil
 }
 
 func (manager *Manager) GC() {
