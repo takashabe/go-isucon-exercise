@@ -64,14 +64,18 @@ func (manager *Manager) sessionId() string {
 	return base64.URLEncoding.EncodeToString(b)
 }
 
-func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (session Session) {
+func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (Session, error) {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 
 	cookie, err := r.Cookie(manager.cookieName)
 	if err != nil || cookie.Value == "" {
+		// Create new cookie
 		sid := manager.sessionId()
-		session, _ = manager.provider.SessionInit(sid)
+		session, err := manager.provider.SessionInit(sid)
+		if err != nil {
+			return nil, fmt.Errorf("SessionInit got invalid response: %s")
+		}
 		cookie := http.Cookie{
 			Name:     manager.cookieName,
 			Value:    url.QueryEscape(sid),
@@ -80,11 +84,16 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (se
 			MaxAge:   int(manager.maxLifeTime),
 		}
 		http.SetCookie(w, &cookie)
-	} else {
-		sid, _ := url.QueryUnescape(cookie.Value)
-		session, _ = manager.provider.SessionRead(sid)
+		return session, nil
 	}
-	return
+
+	// Use an existing cookie
+	sid, _ := url.QueryUnescape(cookie.Value)
+	session, err := manager.provider.SessionRead(sid)
+	if err != nil {
+		return nil, fmt.Errorf("SessionInit got invalid response: %s")
+	}
+	return session, nil
 }
 
 func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) error {
