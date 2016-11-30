@@ -22,7 +22,6 @@ type Provider interface {
 	SessionInit(sid string) (Session, error)
 	SessionRead(sid string) (Session, error)
 	SessionDestroy(sid string) error
-	SessionGC(maxLifeTime int64)
 }
 
 type Session interface {
@@ -112,9 +111,9 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) e
 	return nil
 }
 
-func (manager *Manager) GC() {
-	manager.lock.Lock()
-	defer manager.lock.Unlock()
-	manager.provider.SessionGC(manager.maxLifeTime)
-	time.AfterFunc(time.Duration(manager.maxLifeTime), func() { manager.GC() })
-}
+// func (manager *Manager) GC() {
+//   manager.lock.Lock()
+//   defer manager.lock.Unlock()
+//   manager.provider.SessionGC(manager.maxLifeTime)
+//   time.AfterFunc(time.Duration(manager.maxLifeTime), func() { manager.GC() })
+// }
