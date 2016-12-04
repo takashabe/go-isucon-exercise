@@ -47,6 +47,14 @@ func (s *SessionStore) SessionID() string {
 	return s.sid
 }
 
+func (s *SessionStore) AccessedAt() int {
+	return s.accessedAt.Nanosecond()
+}
+
+func (s *SessionStore) String() string {
+	return fmt.Sprintf("sid: %s, accessedAt: %s, values: %s", s.sid, s.accessedAt, s.values)
+}
+
 func (p *Provider) SessionInit(sid string) (session.Session, error) {
 	p.lock.Lock()
 	defer p.lock.Unlock()

@@ -29,6 +29,7 @@ type Session interface {
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
 	SessionID() string
+	AccessedAt() int
 }
 
 func NewManager(provideName, cookieName string, maxLifeTime int64) (*Manager, error) {
