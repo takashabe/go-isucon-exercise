@@ -9,7 +9,7 @@ import (
 	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
 )
 
-var p = &Provider{list: list.New()}
+var pder = &Provider{list: list.New()}
 
 type Provider struct {
 	lock     sync.Mutex
@@ -25,12 +25,12 @@ type SessionStore struct {
 
 func (s *SessionStore) Set(key, value interface{}) error {
 	s.values[key] = value
-	p.SessionUpdate(s.sid)
+	pder.SessionUpdate(s.sid)
 	return nil
 }
 
 func (s *SessionStore) Get(key interface{}) interface{} {
-	p.SessionUpdate(s.sid)
+	pder.SessionUpdate(s.sid)
 	if v, ok := s.values[key]; ok {
 		return v
 	}
@@ -39,7 +39,7 @@ func (s *SessionStore) Get(key interface{}) interface{} {
 
 func (s *SessionStore) Delete(key interface{}) error {
 	delete(s.values, key)
-	p.SessionUpdate(s.sid)
+	pder.SessionUpdate(s.sid)
 	return nil
 }
 
@@ -64,7 +64,8 @@ func (p *Provider) SessionInit(sid string) (session.Session, error) {
 		accessedAt: time.Now(),
 		values:     v,
 	}
-	p.list.PushBack(s)
+	e := p.list.PushBack(s)
+	p.sessions[sid] = e
 	return s, nil
 }
 
@@ -99,6 +100,6 @@ func (p *Provider) SessionUpdate(sid string) error {
 }
 
 func init() {
-	p.sessions = make(map[string]*list.Element, 0)
-	session.Register("memory", p)
+	pder.sessions = make(map[string]*list.Element)
+	session.Register("memory", pder)
 }

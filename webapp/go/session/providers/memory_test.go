@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"container/list"
 	"testing"
 	"time"
 
@@ -9,18 +8,67 @@ import (
 )
 
 func getProvider() *Provider {
-	return &Provider{list: list.New()}
+	return pder
+}
+
+func TestSet(t *testing.T) {
+	// test set object
+	sid := "TestSet"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	s, _ := p.SessionInit(sid)
+	s.Set("test", "value")
+
+	// test update
+	beforeTime := s.AccessedAt()
+	s.Set("test2", "value")
+	afterTime := s.AccessedAt()
+	if beforeTime >= afterTime {
+		t.Errorf("Not update session, when call Set(): before=%s, after=%s", beforeTime, afterTime)
+	}
+}
+
+func TestGet(t *testing.T) {
+	// test get object
+	sid := "TestGet"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	s, _ := p.SessionInit(sid)
+	expected := "value"
+	s.Set("test", expected)
+	actual := s.Get("test")
+	if expected != actual {
+		t.Errorf("Different values: expected=%s, actual=%s", expected, actual)
+	}
+
+	// test it will be updated when the same key is set
+	expected = "value2"
+	s.Set("test2", "value")
+	s.Set("test2", expected)
+	actual = s.Get("test2")
+	if expected != actual {
+		t.Errorf("Different values has been returned, when updated with set same key: expected=%s, actual=%s", expected, actual)
+	}
+
+	// test update
+	beforeTime := s.AccessedAt()
+	s.Get("test")
+	afterTime := s.AccessedAt()
+	if beforeTime >= afterTime {
+		t.Errorf("Not update session, when call Get(): before=%s, after=%s", beforeTime, afterTime)
+	}
+}
+
+func TestDelete(t *testing.T) {
 }
 
 func TestSessionInit(t *testing.T) {
-	_, err := session.NewManager("memory", "gosessid", 3600)
-	if err != nil {
-		t.Errorf("Failure create session manager: %s", err)
-	}
+	sid := "TestSessionInit"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
 
 	beforeTime := time.Now()
-	p := getProvider()
-	s, err := p.SessionInit("gosessid")
+	s, err := p.SessionInit(sid)
 	if err != nil {
 		t.Errorf("Failure initialize session: %s", err)
 	}
@@ -29,13 +77,59 @@ func TestSessionInit(t *testing.T) {
 	if beforeTime.Nanosecond() > accessedAt || accessedAt > afterTime.Nanosecond() {
 		t.Errorf("Invalid SessionStore accessedAt field")
 	}
+	if sid != s.SessionID() {
+		t.Errorf("Want sid=%s, but got %s", sid, s.SessionID())
+	}
 }
 
 func TestSessionRead(t *testing.T) {
+	// Test if Session exist
+	sid := "TestSessionRead1"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	p.SessionInit(sid)
+	s, err := p.SessionRead(sid)
+	if err != nil || s == nil {
+		t.Errorf("session exist if want session , but got nil")
+	}
+
+	// Test if Session and Provider does not exist
+	s, err = p.SessionRead("TestSessionRead2")
+	if err != nil || s == nil {
+		t.Errorf("session does not exist if want session , but got nil")
+	}
 }
 
 func TestSessionDestroy(t *testing.T) {
+	sid := "TestSessionDestroy"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	p.SessionInit(sid)
+	beforeSize := len(p.sessions)
+	p.SessionDestroy(sid)
+	afterSize := len(p.sessions)
+	if beforeSize <= afterSize {
+		t.Errorf("Sessions are not decreasing before and after SessionDestroy()")
+	}
 }
 
 func TestSessionUpdate(t *testing.T) {
+	sid := "TestSessionUpdate"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	s, _ := p.SessionInit(sid)
+
+	// Test if Session exist
+	beforeTime := s.AccessedAt()
+	p.SessionUpdate(sid)
+	afterTime := s.AccessedAt()
+	if beforeTime >= afterTime {
+		t.Errorf("session.accessedAt not update if SessionUpdate(): before=%d, after=%d", beforeTime, afterTime)
+	}
+
+	// Test if Session does not exist
+	err := p.SessionUpdate("TestSessionUpdate_notExist")
+	if err == nil {
+		t.Errorf("want nil, but got session object")
+	}
 }
