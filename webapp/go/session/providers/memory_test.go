@@ -50,16 +50,40 @@ func TestGet(t *testing.T) {
 		t.Errorf("Different values has been returned, when updated with set same key: expected=%s, actual=%s", expected, actual)
 	}
 
-	// test update
+	// test update session
 	beforeTime := s.AccessedAt()
 	s.Get("test")
 	afterTime := s.AccessedAt()
 	if beforeTime >= afterTime {
 		t.Errorf("Not update session, when call Get(): before=%s, after=%s", beforeTime, afterTime)
 	}
+
+	// test not exist key
+	v := s.Get("test999")
+	if v != nil {
+		t.Errorf("Want nil, but got not nil: actual=%v", v)
+	}
 }
 
 func TestDelete(t *testing.T) {
+	// test delete object
+	sid := "TestDelete"
+	session.NewManager("memory", sid, 3600)
+	p := getProvider()
+	s, _ := p.SessionInit(sid)
+	s.Set("test", "value")
+	s.Delete("test")
+	if v := s.Get("test"); v != nil {
+		t.Errorf("Want nil, but got value: actual=%v", v)
+	}
+
+	// test update session
+	beforeTime := s.AccessedAt()
+	s.Delete("test")
+	afterTime := s.AccessedAt()
+	if beforeTime >= afterTime {
+		t.Errorf("Not update session, when call Delete(): before=%s, after=%s", beforeTime, afterTime)
+	}
 }
 
 func TestSessionInit(t *testing.T) {
@@ -101,6 +125,7 @@ func TestSessionRead(t *testing.T) {
 }
 
 func TestSessionDestroy(t *testing.T) {
+	// Test destroy when exist object
 	sid := "TestSessionDestroy"
 	session.NewManager("memory", sid, 3600)
 	p := getProvider()
@@ -110,6 +135,13 @@ func TestSessionDestroy(t *testing.T) {
 	afterSize := len(p.sessions)
 	if beforeSize <= afterSize {
 		t.Errorf("Sessions are not decreasing before and after SessionDestroy()")
+	}
+
+	// Test destroy when not exist object
+	sid2 := "TestSessionDestroy2"
+	err := p.SessionDestroy(sid2)
+	if err != nil {
+		t.Errorf("Want return nil, when not exsit session: actual=%v", err)
 	}
 }
 
