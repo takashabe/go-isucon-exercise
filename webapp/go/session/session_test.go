@@ -125,7 +125,6 @@ func TestSessionStart(t *testing.T) {
 	if s, err := m.SessionStart(res, req); s == nil || err != nil {
 		t.Errorf("Want have return session and not error: actual session=%v, error=%v", s, err)
 	}
-	// TODO: httptest.NewRecorder()のやつなのでcookieを扱えない。プリミティブに取得する
 	_, err := getCookieValue(res.Header(), m.cookieName)
 	if err != nil {
 		t.Errorf("Invalid cookie, not found cookie name: %s", m.cookieName)
