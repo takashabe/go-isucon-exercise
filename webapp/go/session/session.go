@@ -14,7 +14,7 @@ import (
 type Manager struct {
 	provider    Provider
 	cookieName  string
-	maxLifeTime int64
+	maxLifeTime int
 	lock        sync.Mutex
 }
 
@@ -32,15 +32,13 @@ type Session interface {
 	AccessedAt() int
 }
 
-func NewManager(provideName, cookieName string, maxLifeTime int64) (*Manager, error) {
+func NewManager(provideName, cookieName string, maxLifeTime int) (*Manager, error) {
 	provider, ok := provides[provideName]
 	if !ok {
 		return nil, fmt.Errorf("session: unknown provide %q (forgotten import?)", provideName)
 	}
 	return &Manager{provider: provider, cookieName: cookieName, maxLifeTime: maxLifeTime}, nil
 }
-
-// var globalSessions *Session.Manager
 
 var provides = make(map[string]Provider)
 
@@ -74,14 +72,14 @@ func (manager *Manager) SessionStart(w http.ResponseWriter, r *http.Request) (Se
 		sid := manager.sessionId()
 		session, err := manager.provider.SessionInit(sid)
 		if err != nil {
-			return nil, fmt.Errorf("SessionInit got invalid response: %s")
+			return nil, fmt.Errorf("SessionInit got invalid response: %v", err)
 		}
 		cookie := http.Cookie{
 			Name:     manager.cookieName,
 			Value:    url.QueryEscape(sid),
 			Path:     "/",
 			HttpOnly: true,
-			MaxAge:   int(manager.maxLifeTime),
+			MaxAge:   manager.maxLifeTime,
 		}
 		http.SetCookie(w, &cookie)
 		return session, nil
@@ -111,10 +109,3 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) e
 	http.SetCookie(w, cookie)
 	return nil
 }
-
-// func (manager *Manager) GC() {
-//   manager.lock.Lock()
-//   defer manager.lock.Unlock()
-//   manager.provider.SessionGC(manager.maxLifeTime)
-//   time.AfterFunc(time.Duration(manager.maxLifeTime), func() { manager.GC() })
-// }

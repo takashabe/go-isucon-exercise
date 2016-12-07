@@ -3,19 +3,36 @@ package session
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 )
 
-type TestProvider struct {
+// DummyProvider is testing provider. provider is expected implement to provider package
+type DummyProvider struct{}
+
+func (p *DummyProvider) SessionInit(sid string) (Session, error) { return NewDummySession(), nil }
+func (p *DummyProvider) SessionRead(sid string) (Session, error) { return NewDummySession(), nil }
+func (p *DummyProvider) SessionDestroy(sid string) error         { return nil }
+func (p *DummyProvider) SessionGC(maxLifeTime int64)             {}
+
+func NewDummyProvider() *DummyProvider {
+	return &DummyProvider{}
 }
 
-func NewTestProvider() *TestProvider {
-	return &TestProvider{}
+// DummySession is testing session. session is expected implemnt to provider package
+type DummySession struct{}
+
+func (s *DummySession) Set(key, value interface{}) error { return nil }
+func (s *DummySession) Get(key interface{}) interface{}  { return nil }
+func (s *DummySession) Delete(key interface{}) error     { return nil }
+func (s *DummySession) SessionID() string                { return "" }
+func (s *DummySession) AccessedAt() int                  { return 0 }
+
+func NewDummySession() *DummySession {
+	return &DummySession{}
 }
-func (p *TestProvider) SessionInit(sid string) (Session, error) { return nil, nil }
-func (p *TestProvider) SessionRead(sid string) (Session, error) { return nil, nil }
-func (p *TestProvider) SessionDestroy(sid string) error         { return nil }
-func (p *TestProvider) SessionGC(maxLifeTime int64)             {}
 
 type TestResponseWriter struct {
 	headers http.Header
@@ -39,22 +56,16 @@ func (w *TestResponseWriter) WriteHeader(status int) {
 	w.status = status
 }
 
-func getProvider(providerName string) (Provider, error) {
+func getProvider(providerName string) Provider {
 	// TODO: switch development and production Provider by env flag
-	p := NewTestProvider()
-	err := Register(providerName, p)
-	if err != nil {
-		return nil, fmt.Errorf("getProvider: %s", err)
-	}
-	return p, nil
+	p := NewDummyProvider()
+	Register(providerName, p)
+	return p
 }
 
 func getManager(providerName string, cookieName string) (*Manager, error) {
-	_, err := getProvider(providerName)
-	if err != nil {
-		return nil, fmt.Errorf("getProvider: %s")
-	}
-	m, err := NewManager(providerName, cookieName, 86400)
+	getProvider(providerName)
+	m, err := NewManager(providerName, cookieName, 3600)
 	if err != nil {
 		return nil, fmt.Errorf("getManager: %s")
 	}
@@ -62,15 +73,24 @@ func getManager(providerName string, cookieName string) (*Manager, error) {
 }
 
 func TestRegister(t *testing.T) {
-	err := Register("test2", nil)
-	if err == nil {
-		t.Errorf("got nil want error")
-	}
-
-	p := NewTestProvider()
-	err = Register("test", p)
+	// Test exist provider
+	p := NewDummyProvider()
+	err := Register("test", p)
 	if err != nil {
 		t.Errorf("got error want nil")
+	}
+
+	// Test not exsit provider
+	err = Register("test2", nil)
+	if err == nil {
+		t.Errorf("Want err, but got not error")
+	}
+
+	// Test duplicate provider
+	Register("test3", p)
+	err = Register("test3", p)
+	if err == nil {
+		t.Errorf("Want register error, when already same provider name")
 	}
 }
 
@@ -81,10 +101,7 @@ func TestNewManager(t *testing.T) {
 	}
 
 	providerName := "TestNewManager"
-	_, err = getProvider(providerName)
-	if err != nil {
-		t.Error(err)
-	}
+	getProvider(providerName)
 	_, err = NewManager(providerName, "go_test", 86400)
 	if err != nil {
 		t.Errorf("NewManager should be no error, but got error")
@@ -92,10 +109,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestSessionId(t *testing.T) {
-	m, err := getManager("TestSessionId", "gosess")
-	if err != nil {
-		t.Error(err)
-	}
+	m, _ := getManager("TestSessionId", "gosess")
 	a := m.sessionId()
 	b := m.sessionId()
 	if a == b {
@@ -104,4 +118,36 @@ func TestSessionId(t *testing.T) {
 }
 
 func TestSessionStart(t *testing.T) {
+	// Test set session(cookie)
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+	m, _ := getManager("TestSessionStart", "gosess")
+	if s, err := m.SessionStart(res, req); s == nil || err != nil {
+		t.Errorf("Want have return session and not error: actual session=%v, error=%v", s, err)
+	}
+	// TODO: httptest.NewRecorder()のやつなのでcookieを扱えない。プリミティブに取得する
+	_, err := getCookieValue(res.Header(), m.cookieName)
+	if err != nil {
+		t.Errorf("Invalid cookie, not found cookie name: %s", m.cookieName)
+	}
+
+	actualAge, _ := getCookieValue(res.Header(), "Max-Age")
+	if a, _ := strconv.Atoi(actualAge); a != m.maxLifeTime {
+		t.Errorf("Invalid cookie, Max-Age want %s but got %s", m.maxLifeTime, actualAge)
+	}
+}
+
+func getCookieValue(h http.Header, filter string) (string, error) {
+	cookie := h.Get("Set-Cookie")
+	parts := strings.Split(strings.TrimSpace(cookie), ";")
+	for _, v := range parts {
+		v = strings.TrimSpace(v)
+		exist := strings.HasPrefix(v, filter)
+		if !exist {
+			continue
+		}
+		// trim string (filter + "=")
+		return v[len(filter)+1:], nil
+	}
+	return "", fmt.Errorf("Not found value")
 }
