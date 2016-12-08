@@ -3,6 +3,7 @@ package memory
 import (
 	"container/list"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -100,6 +101,10 @@ func (p *Provider) SessionUpdate(sid string) error {
 }
 
 func init() {
+	fmt.Println("hogehoge")
 	pder.sessions = make(map[string]*list.Element)
-	session.Register("memory", pder)
+	err := session.Register("memory", pder)
+	if err != nil {
+		log.Printf("Failure register memory session provider: %v", err)
+	}
 }
