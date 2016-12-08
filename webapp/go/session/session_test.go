@@ -135,6 +135,19 @@ func TestSessionStart(t *testing.T) {
 	if a, _ := strconv.Atoi(actualAge); a != m.maxLifeTime {
 		t.Errorf("Invalid cookie, Max-Age want %s but got %s", m.maxLifeTime, actualAge)
 	}
+
+	// Test already existing cookie
+	// set dummy cookie
+	sid, _ := getCookieValue(res.Header(), m.cookieName)
+	cookie := http.Cookie{
+		Name:   m.cookieName,
+		Value:  sid,
+		MaxAge: m.maxLifeTime,
+	}
+	req.AddCookie(&cookie)
+	if s, err := m.SessionStart(res, req); s == nil || err != nil {
+		t.Errorf("Want have return session and not error: actual session=%v, error=%v", s, err)
+	}
 }
 
 func TestSessionDestroy(t *testing.T) {
