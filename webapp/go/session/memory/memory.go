@@ -101,7 +101,6 @@ func (p *Provider) SessionUpdate(sid string) error {
 }
 
 func init() {
-	fmt.Println("hogehoge")
 	pder.sessions = make(map[string]*list.Element)
 	err := session.Register("memory", pder)
 	if err != nil {
