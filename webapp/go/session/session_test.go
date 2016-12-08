@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // DummyProvider is testing provider. provider is expected implement to provider package
@@ -133,6 +134,39 @@ func TestSessionStart(t *testing.T) {
 	actualAge, _ := getCookieValue(res.Header(), "Max-Age")
 	if a, _ := strconv.Atoi(actualAge); a != m.maxLifeTime {
 		t.Errorf("Invalid cookie, Max-Age want %s but got %s", m.maxLifeTime, actualAge)
+	}
+}
+
+func TestSessionDestroy(t *testing.T) {
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/", nil)
+	m, _ := getManager("TestSessionDestroy", "gosess")
+	m.SessionStart(res, req)
+
+	// set dummy cookie
+	sid, _ := getCookieValue(res.Header(), m.cookieName)
+	cookie := http.Cookie{
+		Name:   m.cookieName,
+		Value:  sid,
+		MaxAge: m.maxLifeTime,
+	}
+	res.Header().Del("Set-Cookie")
+	req.AddCookie(&cookie)
+
+	if err := m.SessionDestroy(res, req); err != nil {
+		t.Errorf("Want non error, but got error: err=%v", err)
+	}
+	maxAge, _ := getCookieValue(res.Header(), "Max-Age")
+	if i, _ := strconv.Atoi(maxAge); i > 0 {
+		// "MaxAge<0" replace by "MaxAge=0"
+		t.Errorf("MaxAge want 0, but got MaxAge=%s", maxAge)
+	}
+	expires, _ := getCookieValue(res.Header(), "Expires")
+	// Expires are saved in seconds. So only to test what is likely.
+	actualTime, _ := time.Parse(time.RFC1123, expires)
+	expectedTime := time.Now().Add(time.Duration(10) * time.Second)
+	if expectedTime.Before(actualTime) {
+		t.Errorf("Expires are not saved time.Now()")
 	}
 }
 
