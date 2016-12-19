@@ -27,6 +27,7 @@ type SessionStore struct {
 func (s *SessionStore) Set(key, value interface{}) error {
 	s.values[key] = value
 	pder.SessionUpdate(s.sid)
+	log.Printf("Set: sid=%v, key=%v, value=%v", s.sid, key, s.values[key])
 	return nil
 }
 
