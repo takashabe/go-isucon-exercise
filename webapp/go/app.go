@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -107,7 +106,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if "/" != r.URL.Path {
 		return
 	}
-	log.Println("called indexHandler")
 
 	user, err := getCurrentUser(w, r)
 	if err != nil {
@@ -154,8 +152,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("called loginHandler")
-
 	// login
 	if r.Method == "POST" {
 		err := r.ParseForm()
@@ -198,15 +194,17 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	manager, err := session.NewManager("memory", "gosess", 3600)
-	checkErr(err)
-	sessionManager = *manager
-
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/initialize", initializeHandler)
 	http.ListenAndServe(":8080", nil)
+}
+
+func init() {
+	manager, err := session.NewManager("memory", "gosess", 3600)
+	checkErr(err)
+	sessionManager = *manager
 }
 
 func checkErr(err error) {

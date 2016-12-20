@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0kubun/pp"
 	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
 )
 
@@ -27,7 +28,6 @@ type SessionStore struct {
 func (s *SessionStore) Set(key, value interface{}) error {
 	s.values[key] = value
 	pder.SessionUpdate(s.sid)
-	log.Printf("Set: sid=%v, key=%v, value=%v", s.sid, key, s.values[key])
 	return nil
 }
 
@@ -54,7 +54,7 @@ func (s *SessionStore) AccessedAt() int {
 }
 
 func (s *SessionStore) String() string {
-	return fmt.Sprintf("sid: %s, accessedAt: %s, values: %s", s.sid, s.accessedAt, s.values)
+	return pp.Sprint(s)
 }
 
 func (p *Provider) SessionInit(sid string) (session.Session, error) {
