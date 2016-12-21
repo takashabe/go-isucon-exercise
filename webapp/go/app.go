@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -76,6 +77,7 @@ func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) 
 		s.Delete("id")
 		sessionManager.SessionDestroy(w, r)
 		authError(w)
+		return nil, errors.New(fmt.Sprintf("Unregistered User(request id: %d)", id))
 	}
 
 	currentUser = &user
@@ -157,19 +159,23 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			authError(w)
+			return
 		}
 		email := r.PostFormValue("email")
 		password := r.PostFormValue("password")
 		if email == "" || password == "" {
 			authError(w)
+			return
 		}
 		user, err := authenticate(email, password)
 		if err != nil {
 			authError(w)
+			return
 		}
 		s, err := sessionManager.SessionStart(w, r)
 		if err != nil {
 			authError(w)
+			return
 		}
 		s.Set("id", user.ID)
 		http.Redirect(w, r, "/", 302)
