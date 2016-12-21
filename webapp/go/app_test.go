@@ -46,21 +46,35 @@ func TestLoginWithPost(t *testing.T) {
 		t.Errorf("want no error, but %v", err.Error())
 	}
 	if res.StatusCode != 302 {
-		t.Errorf("want 302, but %d", res.StatusCode)
+		t.Errorf("auth: want 302, but %d", res.StatusCode)
 	}
 	if loc, _ := res.Location(); loc.Path != "/" {
 		t.Errorf("want /, but %v", loc.Path)
 	}
 	res.Body.Close()
 
-	// Failure Authenticate
+	// Empty login params
 	emptyAuth := url.Values{}
 	res, err = client.PostForm(server.URL, emptyAuth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
 	if res.StatusCode != 401 {
-		t.Errorf("want 401, but %d", res.StatusCode)
+		t.Errorf("emptyAuth: want 401, but %d", res.StatusCode)
+	}
+	res.Body.Close()
+
+	// Invalid login params
+	invalidAuth := url.Values{
+		"email":    {"empty"},
+		"password": {"empty"},
+	}
+	res, err = client.PostForm(server.URL, invalidAuth)
+	if err != nil {
+		t.Errorf("want no error,  but %v", err.Error())
+	}
+	if res.StatusCode != 401 {
+		t.Errorf("invalidAuth: want 401,  but %d", res.StatusCode)
 	}
 	res.Body.Close()
 }

@@ -92,7 +92,10 @@ func authenticate(email, password string) (UserModel, error) {
 	checkErr(err)
 
 	user := UserModel{}
-	stmt.QueryRow(email, password).Scan(&user.ID)
+	err = stmt.QueryRow(email, password).Scan(&user.ID)
+	if err != nil {
+		return user, errors.New(err.Error())
+	}
 	return user, nil
 }
 
