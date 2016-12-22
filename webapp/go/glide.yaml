@@ -4,3 +4,5 @@ import:
   version: ^1.2.0
 - package: github.com/k0kubun/pp
   version: ^2.2.0
+- package: github.com/pkg/errors
+  version: ^0.8.0

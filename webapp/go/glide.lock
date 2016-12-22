@@ -1,8 +1,18 @@
-hash: b9cf2e7a185a152704ab3fba6d355b7c204555a91309e1d4e60df7fbfe20a923
-updated: 2016-12-18T12:28:45.238570023+09:00
+hash: c51e16132f4fd82bdc500790036b0b22e02e3691b8c01e98b2ad87c312422b05
+updated: 2016-12-23T00:28:28.571596069+09:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: a0583e0143b1624142adab07e0e97fe106d99561
 - name: github.com/k0kubun/pp
   version: 36d5366f4ec038f9a76dd85c7b29074089bb9b9e
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  subpackages:
+  - unix
 testImports: []
