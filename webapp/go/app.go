@@ -2,13 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 	"text/template"
 	"time"
+
+	"github.com/pkg/errors"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
@@ -63,7 +63,7 @@ func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) 
 	checkErr(err)
 	id := s.Get("id")
 	if id == nil {
-		return nil, fmt.Errorf("Not found user in session")
+		return nil, errors.New("Not found user in session")
 	}
 
 	user := UserModel{}
@@ -77,7 +77,7 @@ func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) 
 		s.Delete("id")
 		sessionManager.SessionDestroy(w, r)
 		authError(w)
-		return nil, errors.New(fmt.Sprintf("Unregistered User(request id: %d)", id))
+		return nil, errors.Wrapf(err, "Unregistered User(request id: %d)", id)
 	}
 
 	currentUser = &user

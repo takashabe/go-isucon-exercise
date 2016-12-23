@@ -1,7 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -76,5 +78,63 @@ func TestLoginWithPost(t *testing.T) {
 	if res.StatusCode != 401 {
 		t.Errorf("invalidAuth: want 401,  but %d", res.StatusCode)
 	}
+	res.Body.Close()
+}
+
+func TestIndex(t *testing.T) {
+	// when non login
+	server := httptest.NewServer(http.HandlerFunc(indexHandler))
+	defer server.Close()
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	res, err := client.Get(server.URL)
+	if err != nil {
+		t.Errorf("want no error, but %v", err.Error())
+	}
+	if res.StatusCode != 302 {
+		t.Errorf("want 302, but %d", res.StatusCode)
+	}
+	if loc, _ := res.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, but %s", loc.Path)
+	}
+	res.Body.Close()
+
+	// login to index
+	loginServer := httptest.NewServer(http.HandlerFunc(loginHandler))
+	defer loginServer.Close()
+	indexServer := httptest.NewServer(http.HandlerFunc(indexHandler))
+	defer indexServer.Close()
+
+	jar, _ := cookiejar.New(nil)
+	client = &http.Client{
+		Jar: jar,
+	}
+
+	auth := url.Values{
+		"email":    {"Doris@example.com"},
+		"password": {"Doris"},
+	}
+	res, err = client.PostForm(loginServer.URL, auth)
+	if err != nil {
+		t.Errorf("want no error, but %v", err.Error())
+	}
+	res.Body.Close()
+
+	res, err = client.Get(indexServer.URL)
+	if err != nil {
+		t.Errorf("want no error, but %v", err.Error())
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Error("want no error, but %v", err.Error())
+	}
+
+	// TODO: bodyパースしてツイート情報のエレメントがあるかどうかをテストする
+
 	res.Body.Close()
 }
