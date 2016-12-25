@@ -6,3 +6,8 @@ import:
   version: ^2.2.0
 - package: github.com/pkg/errors
   version: ^0.8.0
+- package: golang.org/x/net
+  subpackages:
+  - html
+- package: github.com/Puerkitobio/goquery
+  version: ^1.0.1
