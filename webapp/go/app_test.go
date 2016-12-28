@@ -170,7 +170,6 @@ func TestLogoutHandler(t *testing.T) {
 	defer indexServer.Close()
 	logoutServer := httptest.NewServer(http.HandlerFunc(logoutHandler))
 	defer logoutServer.Close()
-	log.Printf("%s, %s, %s", loginServer.URL, indexServer.URL, logoutServer.URL)
 
 	jar, _ := cookiejar.New(nil)
 	cookieClient := &http.Client{
@@ -186,6 +185,7 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("want no error, but %v", err.Error())
 	}
 	res.Body.Close()
+	log.Println("cookieClient.postform(login)")
 
 	res, err = cookieClient.Get(indexServer.URL)
 	if err != nil {
@@ -195,6 +195,7 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("want 200, got %d", res.StatusCode)
 	}
 	res.Body.Close()
+	log.Println("cookieClient.get(index)")
 
 	res, err = cookieClient.Get(logoutServer.URL)
 	if res.StatusCode != 302 {
@@ -204,17 +205,18 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("want /login, got %s", loc.Path)
 	}
 	res.Body.Close()
+	log.Println("cookieClient.get(logout)")
 
 	cookieClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
 	res, err = cookieClient.Get(indexServer.URL)
-	// if res.StatusCode != 302 {
-	//   t.Errorf("want 302, got %d", res.StatusCode)
-	// }
-	// if loc, _ := res.Location(); loc.Path != "/login" {
-	//   t.Errorf("want /login, got %s", loc.Path)
-	// }
-	// pp.Println(res)
+	if res.StatusCode != 302 {
+		t.Errorf("want 302, got %d", res.StatusCode)
+	}
+	if loc, _ := res.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
 	res.Body.Close()
+	log.Println("cookieClient.get(index)")
 }
