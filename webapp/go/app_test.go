@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -32,8 +31,8 @@ func TestLoginWithGet(t *testing.T) {
 }
 
 func TestLoginWithPost(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(loginHandler))
-	defer server.Close()
+	ts := httptest.NewServer(http.HandlerFunc(loginHandler))
+	defer ts.Close()
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -46,7 +45,7 @@ func TestLoginWithPost(t *testing.T) {
 		"email":    {"Doris@example.com"},
 		"password": {"Doris"},
 	}
-	res, err := client.PostForm(server.URL, auth)
+	res, err := client.PostForm(ts.URL, auth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
@@ -60,7 +59,7 @@ func TestLoginWithPost(t *testing.T) {
 
 	// Empty login params
 	emptyAuth := url.Values{}
-	res, err = client.PostForm(server.URL, emptyAuth)
+	res, err = client.PostForm(ts.URL, emptyAuth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
@@ -74,20 +73,19 @@ func TestLoginWithPost(t *testing.T) {
 		"email":    {"empty"},
 		"password": {"empty"},
 	}
-	res, err = client.PostForm(server.URL, invalidAuth)
+	res, err = client.PostForm(ts.URL, invalidAuth)
 	if err != nil {
 		t.Errorf("want no error,  but %v", err.Error())
 	}
 	if res.StatusCode != 401 {
 		t.Errorf("invalidAuth: want 401,  but %d", res.StatusCode)
 	}
-	res.Body.Close()
+	defer res.Body.Close()
 }
 
-func TestIndex(t *testing.T) {
-	// when non login
-	server := httptest.NewServer(http.HandlerFunc(indexHandler))
-	defer server.Close()
+func TestIndexWithNotLogin(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(indexHandler))
+	defer ts.Close()
 
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -95,7 +93,7 @@ func TestIndex(t *testing.T) {
 		},
 	}
 
-	res, err := client.Get(server.URL)
+	res, err := client.Get(ts.URL)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
@@ -105,35 +103,42 @@ func TestIndex(t *testing.T) {
 	if loc, _ := res.Location(); loc.Path != "/login" {
 		t.Errorf("want /login, but %s", loc.Path)
 	}
-	res.Body.Close()
+	defer res.Body.Close()
+}
 
-	// login to index
-	loginServer := httptest.NewServer(http.HandlerFunc(loginHandler))
-	defer loginServer.Close()
-	indexServer := httptest.NewServer(http.HandlerFunc(indexHandler))
-	defer indexServer.Close()
+func TestIndexWithLogin(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/login", loginHandler)
+
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
 
 	jar, _ := cookiejar.New(nil)
-	client = &http.Client{
+	client := &http.Client{
 		Jar: jar,
 	}
 
+	// login
 	auth := url.Values{
 		"email":    {"Doris@example.com"},
 		"password": {"Doris"},
 	}
-	res, err = client.PostForm(loginServer.URL, auth)
+	loginResp, err := client.PostForm(ts.URL+"/login", auth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
-	res.Body.Close()
+	defer loginResp.Body.Close()
 
-	res, err = client.Get(indexServer.URL)
+	// get index after login
+	indexResp, err := client.Get(ts.URL)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
+	defer indexResp.Body.Close()
 
-	doc, err := goquery.NewDocumentFromResponse(res)
+	// parsed html body
+	doc, err := goquery.NewDocumentFromResponse(indexResp)
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
@@ -158,21 +163,18 @@ func TestIndex(t *testing.T) {
 	if len(tweet) <= 0 {
 		t.Errorf("want len more than 0, got %s", tweet)
 	}
-
-	res.Body.Close()
 }
 
 func TestLogoutHandler(t *testing.T) {
-	// login to index
-	loginServer := httptest.NewServer(http.HandlerFunc(loginHandler))
-	defer loginServer.Close()
-	indexServer := httptest.NewServer(http.HandlerFunc(indexHandler))
-	defer indexServer.Close()
-	logoutServer := httptest.NewServer(http.HandlerFunc(logoutHandler))
-	defer logoutServer.Close()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/login", loginHandler)
+	mux.HandleFunc("/logout", logoutHandler)
+
+	ts := httptest.NewServer(mux)
 
 	jar, _ := cookiejar.New(nil)
-	cookieClient := &http.Client{
+	client := &http.Client{
 		Jar: jar,
 	}
 
@@ -180,43 +182,40 @@ func TestLogoutHandler(t *testing.T) {
 		"email":    {"Doris@example.com"},
 		"password": {"Doris"},
 	}
-	res, err := cookieClient.PostForm(loginServer.URL, auth)
+	loginResp, err := client.PostForm(ts.URL+"/login", auth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
-	res.Body.Close()
-	log.Println("cookieClient.postform(login)")
+	defer loginResp.Body.Close()
 
-	res, err = cookieClient.Get(indexServer.URL)
+	indexResp, err := client.Get(ts.URL)
 	if err != nil {
 		t.Errorf("want no error, but %v", err.Error())
 	}
-	if res.StatusCode != 200 {
-		t.Errorf("want 200, got %d", res.StatusCode)
+	if indexResp.StatusCode != 200 {
+		t.Errorf("want 200, got %d", indexResp.StatusCode)
 	}
-	res.Body.Close()
-	log.Println("cookieClient.get(index)")
+	defer indexResp.Body.Close()
 
-	res, err = cookieClient.Get(logoutServer.URL)
-	if res.StatusCode != 302 {
-		t.Errorf("want 302, got %d", res.StatusCode)
-	}
-	if loc, _ := res.Location(); loc.Path != "/login" {
-		t.Errorf("want /login, got %s", loc.Path)
-	}
-	res.Body.Close()
-	log.Println("cookieClient.get(logout)")
-
-	cookieClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	// test http headers on redirect
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
-	res, err = cookieClient.Get(indexServer.URL)
-	if res.StatusCode != 302 {
-		t.Errorf("want 302, got %d", res.StatusCode)
+	logoutResp, err := client.Get(ts.URL + "/logout")
+	if logoutResp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", logoutResp.StatusCode)
 	}
-	if loc, _ := res.Location(); loc.Path != "/login" {
+	if loc, _ := logoutResp.Location(); loc.Path != "/login" {
 		t.Errorf("want /login, got %s", loc.Path)
 	}
-	res.Body.Close()
-	log.Println("cookieClient.get(index)")
+	defer logoutResp.Body.Close()
+
+	indexResp2, err := client.Get(ts.URL)
+	if indexResp2.StatusCode != 302 {
+		t.Errorf("want 302, got %d", indexResp2.StatusCode)
+	}
+	if loc, _ := indexResp2.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+	defer indexResp2.Body.Close()
 }

@@ -113,10 +113,8 @@ func authError(w http.ResponseWriter) {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if "/" != r.URL.Path {
-		log.Println("skipped /")
 		return
 	}
-	log.Println("Called /")
 
 	user, err := getCurrentUser(w, r)
 	if err != nil {
@@ -163,7 +161,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	followerStmt.QueryRow(user.ID).Scan(&content.Followers)
 
 	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/index.tmpl"))
-	// pp.Println(content)
 	err = tmpl.Execute(w, content)
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to applies template1"))
@@ -171,7 +168,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Called loginHandler")
 	// login
 	if r.Method == "POST" {
 		err := r.ParseForm()
@@ -197,7 +193,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		s.Set("id", user.ID)
 		http.Redirect(w, r, "/", 302)
-		log.Println("redirect to /")
 		return
 	}
 
@@ -211,10 +206,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Called /logout")
 	sessionManager.SessionDestroy(w, r)
 	http.Redirect(w, r, "/login", 302)
-	log.Println("redirect to /login")
 	return
 }
 
