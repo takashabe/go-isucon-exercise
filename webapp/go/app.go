@@ -211,6 +211,10 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func tweetHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Not Implemented", 503)
+}
+
 func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
 	exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
@@ -218,9 +222,16 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/login", loginHandler) // GET and POST
 	http.HandleFunc("/logout", logoutHandler)
+	http.HandleFunc("/tweet", tweetHandler) // GET and POST
+	// http.HandleFunc("/user", userHandler) // require user_id parameter -> "/user/101"
+	// http.HandleFunc("/following", followingHandler)
+	// http.HandleFunc("/followers", followersHandler)
+	// http.HandleFunc("/follow", followHandler) // POST. require user_id parameter -> "/follow/101"
 	http.HandleFunc("/initialize", initializeHandler)
+
+	log.Println("Started server...")
 	http.ListenAndServe(":8080", nil)
 }
 

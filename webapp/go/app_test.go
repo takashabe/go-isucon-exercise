@@ -17,7 +17,7 @@ func TestLoginWithGet(t *testing.T) {
 
 	res, err := http.Get(server.URL)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	defer res.Body.Close()
 
@@ -47,7 +47,7 @@ func TestLoginWithPost(t *testing.T) {
 	}
 	res, err := client.PostForm(ts.URL, auth)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	if res.StatusCode != 302 {
 		t.Errorf("auth: want 302, but %d", res.StatusCode)
@@ -61,7 +61,7 @@ func TestLoginWithPost(t *testing.T) {
 	emptyAuth := url.Values{}
 	res, err = client.PostForm(ts.URL, emptyAuth)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	if res.StatusCode != 401 {
 		t.Errorf("emptyAuth: want 401, but %d", res.StatusCode)
@@ -75,7 +75,7 @@ func TestLoginWithPost(t *testing.T) {
 	}
 	res, err = client.PostForm(ts.URL, invalidAuth)
 	if err != nil {
-		t.Errorf("want no error,  but %v", err.Error())
+		t.Errorf("want no error,  but %v", err)
 	}
 	if res.StatusCode != 401 {
 		t.Errorf("invalidAuth: want 401,  but %d", res.StatusCode)
@@ -95,7 +95,7 @@ func TestIndexWithNotLogin(t *testing.T) {
 
 	res, err := client.Get(ts.URL)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	if res.StatusCode != 302 {
 		t.Errorf("want 302, but %d", res.StatusCode)
@@ -126,14 +126,14 @@ func TestIndexWithLogin(t *testing.T) {
 	}
 	loginResp, err := client.PostForm(ts.URL+"/login", auth)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	defer loginResp.Body.Close()
 
 	// get index after login
 	indexResp, err := client.Get(ts.URL)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	defer indexResp.Body.Close()
 
@@ -184,13 +184,13 @@ func TestLogoutHandler(t *testing.T) {
 	}
 	loginResp, err := client.PostForm(ts.URL+"/login", auth)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	defer loginResp.Body.Close()
 
 	indexResp, err := client.Get(ts.URL)
 	if err != nil {
-		t.Errorf("want no error, but %v", err.Error())
+		t.Errorf("want no error, but %v", err)
 	}
 	if indexResp.StatusCode != 200 {
 		t.Errorf("want 200, got %d", indexResp.StatusCode)
@@ -218,4 +218,28 @@ func TestLogoutHandler(t *testing.T) {
 		t.Errorf("want /login, got %s", loc.Path)
 	}
 	defer indexResp2.Body.Close()
+}
+
+func TestTweetWithGet(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(tweetHandler))
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL)
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Errorf("want 200, got %d", resp.StatusCode)
+	}
+
+	doc, err := goquery.NewDocumentFromResponse(resp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	tweet := doc.Find("dd[id='tweet']").Text()
+	if len(tweet) <= 0 {
+		t.Errorf("want len more than 0, got %s", tweet)
+	}
 }
