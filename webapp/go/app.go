@@ -212,6 +212,41 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tweetHandler(w http.ResponseWriter, r *http.Request) {
+	// POST
+	if r.Method == "POST" {
+		// require login
+		user, err := getCurrentUser(w, r)
+		if err != nil {
+			http.Redirect(w, r, "/login", 303)
+			return
+		}
+
+		err = r.ParseForm()
+		if err != nil {
+			checkErr(errors.Wrap(err, "failed to parsed form on POST tweet"))
+			http.NotFound(w, r)
+			return
+		}
+		content := r.PostFormValue("content")
+		if len(content) <= 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		db := getDB()
+		defer db.Close()
+
+		stmt, err := db.Prepare("INSERT INTO tweet (user_id, content) VALUES (?,?)")
+		defer stmt.Close()
+		checkErr(errors.Wrap(err, "failed to insert tweet prepared statement"))
+
+		_, err = stmt.Exec(user.ID, content)
+		checkErr(errors.Wrap(err, "failed to exec insert tweet"))
+
+		http.Redirect(w, r, "/", 303)
+		return
+	}
+
 	// require login
 	_, err := getCurrentUser(w, r)
 	if err != nil {

@@ -214,7 +214,7 @@ func TestLogoutHandler(t *testing.T) {
 	defer indexResp2.Body.Close()
 }
 
-func TestTweetWithNotLoginGet(t *testing.T) {
+func TestTweetWithNotLogin(t *testing.T) {
 	ts := httptest.NewServer(getServerMux())
 	defer ts.Close()
 
@@ -223,15 +223,31 @@ func TestTweetWithNotLoginGet(t *testing.T) {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 	}
 
-	resp, err := client.Get(ts.URL + "/tweet")
-	defer resp.Body.Close()
+	// GET
+	getResp, err := client.Get(ts.URL + "/tweet")
+	defer getResp.Body.Close()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
-	if resp.StatusCode != 302 {
-		t.Errorf("want 302, got %d", resp.StatusCode)
+	if getResp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", getResp.StatusCode)
 	}
-	if loc, _ := resp.Location(); loc.Path != "/login" {
+	if loc, _ := getResp.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+
+	// POST
+	tweet := url.Values{
+		"content": {"hello"},
+	}
+	postResp, err := client.PostForm(ts.URL+"/tweet", tweet)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if postResp.StatusCode != 303 {
+		t.Errorf("want 303, got %d", postResp.StatusCode)
+	}
+	if loc, _ := postResp.Location(); loc.Path != "/login" {
 		t.Errorf("want /login, got %s", loc.Path)
 	}
 }
@@ -258,5 +274,63 @@ func TestTweetWithLoginGet(t *testing.T) {
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("want 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestTweetWithNotLoginPost(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	// only redirect test
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	tweet := url.Values{
+		"content": {"hello"},
+	}
+	tweetResp, err := client.PostForm(ts.URL+"/tweet", tweet)
+	defer tweetResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if tweetResp.StatusCode != 303 {
+		t.Errorf("want 303, got %d", tweetResp.StatusCode)
+	}
+	if loc, _ := tweetResp.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+}
+
+func TestTweetWithLoginPost(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	// only redirect test
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar:           jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
+	defer loginResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	tweet := url.Values{
+		"content": {"hello"},
+	}
+	tweetResp, err := client.PostForm(ts.URL+"/tweet", tweet)
+	defer tweetResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if tweetResp.StatusCode != 303 {
+		t.Errorf("want 303, got %d", tweetResp.StatusCode)
+	}
+	if loc, _ := tweetResp.Location(); loc.Path != "/" {
+		t.Errorf("want /, got %s", loc.Path)
 	}
 }
