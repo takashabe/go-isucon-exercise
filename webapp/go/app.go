@@ -107,7 +107,7 @@ func authError(w http.ResponseWriter) {
 	w.WriteHeader(401)
 	err := tmpl.Execute(w, content)
 	if err != nil {
-		log.Println(errors.Wrap(err, "failed to applies template2"))
+		log.Println(errors.Wrap(err, "failed to applies login on authError template"))
 	}
 }
 
@@ -163,7 +163,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/index.tmpl"))
 	err = tmpl.Execute(w, content)
 	if err != nil {
-		log.Println(errors.Wrap(err, "failed to applies template1"))
+		log.Println(errors.Wrap(err, "failed to applies index template"))
 	}
 }
 
@@ -201,7 +201,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/login.tmpl"))
 	err := tmpl.Execute(w, content)
 	if err != nil {
-		log.Println(errors.Wrap(err, "failed to applies template"))
+		log.Println(errors.Wrap(err, "failed to applies login template"))
 	}
 }
 
@@ -212,7 +212,18 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tweetHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Not Implemented", 503)
+	// require login
+	_, err := getCurrentUser(w, r)
+	if err != nil {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/tweet.tmpl"))
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to applies tweet template"))
+	}
 }
 
 func initializeHandler(w http.ResponseWriter, r *http.Request) {

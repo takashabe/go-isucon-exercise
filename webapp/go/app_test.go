@@ -11,6 +11,23 @@ import (
 	"github.com/Puerkitobio/goquery"
 )
 
+func getServerMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", indexHandler)
+	mux.HandleFunc("/login", loginHandler)
+	mux.HandleFunc("/logout", logoutHandler)
+	mux.HandleFunc("/tweet", tweetHandler)
+	return mux
+}
+
+func getDummyLoginParams() url.Values {
+	auth := url.Values{
+		"email":    {"Doris@example.com"},
+		"password": {"Doris"},
+	}
+	return auth
+}
+
 func TestLoginWithGet(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(loginHandler))
 	defer server.Close()
@@ -34,18 +51,13 @@ func TestLoginWithPost(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(loginHandler))
 	defer ts.Close()
 
+	// only redirect test
 	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 	}
 
 	// Success Authenticate
-	auth := url.Values{
-		"email":    {"Doris@example.com"},
-		"password": {"Doris"},
-	}
-	res, err := client.PostForm(ts.URL, auth)
+	res, err := client.PostForm(ts.URL, getDummyLoginParams())
 	if err != nil {
 		t.Errorf("want no error, but %v", err)
 	}
@@ -70,8 +82,8 @@ func TestLoginWithPost(t *testing.T) {
 
 	// Invalid login params
 	invalidAuth := url.Values{
-		"email":    {"empty"},
-		"password": {"empty"},
+		"email":    {""},
+		"password": {""},
 	}
 	res, err = client.PostForm(ts.URL, invalidAuth)
 	if err != nil {
@@ -84,13 +96,12 @@ func TestLoginWithPost(t *testing.T) {
 }
 
 func TestIndexWithNotLogin(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(indexHandler))
+	ts := httptest.NewServer(getServerMux())
 	defer ts.Close()
 
+	// only redirect test
 	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 	}
 
 	res, err := client.Get(ts.URL)
@@ -107,11 +118,7 @@ func TestIndexWithNotLogin(t *testing.T) {
 }
 
 func TestIndexWithLogin(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/login", loginHandler)
-
-	ts := httptest.NewServer(mux)
+	ts := httptest.NewServer(getServerMux())
 	defer ts.Close()
 
 	jar, _ := cookiejar.New(nil)
@@ -120,11 +127,7 @@ func TestIndexWithLogin(t *testing.T) {
 	}
 
 	// login
-	auth := url.Values{
-		"email":    {"Doris@example.com"},
-		"password": {"Doris"},
-	}
-	loginResp, err := client.PostForm(ts.URL+"/login", auth)
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
 	if err != nil {
 		t.Errorf("want no error, but %v", err)
 	}
@@ -166,23 +169,14 @@ func TestIndexWithLogin(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/login", loginHandler)
-	mux.HandleFunc("/logout", logoutHandler)
-
-	ts := httptest.NewServer(mux)
+	ts := httptest.NewServer(getServerMux())
 
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Jar: jar,
 	}
 
-	auth := url.Values{
-		"email":    {"Doris@example.com"},
-		"password": {"Doris"},
-	}
-	loginResp, err := client.PostForm(ts.URL+"/login", auth)
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
 	if err != nil {
 		t.Errorf("want no error, but %v", err)
 	}
@@ -197,7 +191,7 @@ func TestLogoutHandler(t *testing.T) {
 	}
 	defer indexResp.Body.Close()
 
-	// test http headers on redirect
+	// only redirect test
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
@@ -220,16 +214,48 @@ func TestLogoutHandler(t *testing.T) {
 	defer indexResp2.Body.Close()
 }
 
-func TestTweetWithGet(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(tweetHandler))
+func TestTweetWithNotLoginGet(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL)
+	// only redirect test
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	resp, err := client.Get(ts.URL + "/tweet")
 	defer resp.Body.Close()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
+	if resp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", resp.StatusCode)
+	}
+	if loc, _ := resp.Location(); loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+}
 
+func TestTweetWithLoginGet(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar: jar,
+	}
+
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
+	defer loginResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	resp, err := client.Get(ts.URL + "/tweet")
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
 	if resp.StatusCode != 200 {
 		t.Errorf("want 200, got %d", resp.StatusCode)
 	}
