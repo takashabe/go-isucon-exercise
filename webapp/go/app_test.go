@@ -233,13 +233,4 @@ func TestTweetWithGet(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Errorf("want 200, got %d", resp.StatusCode)
 	}
-
-	doc, err := goquery.NewDocumentFromResponse(resp)
-	if err != nil {
-		t.Errorf("want no error, got %v", err)
-	}
-	tweet := doc.Find("dd[id='tweet']").Text()
-	if len(tweet) <= 0 {
-		t.Errorf("want len more than 0, got %s", tweet)
-	}
 }
