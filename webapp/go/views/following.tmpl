@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <h2>Following list</h2>
+  <div class="row panel panel-primary" id="following">
+    <dl>
+      {{range $i, $v := .FollowingList}}
+        <dt class="follow-date">{{$v.CreatedAt}}</dt>
+        <dd class="follow-follow"><a href="/user/{{$v.FollowId}}">{{$v.UserName}}</a></dd>
+      {{end}}
+    </dl>
+  </div>
+{{ end }}
