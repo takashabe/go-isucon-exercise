@@ -278,6 +278,10 @@ func tweetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	return
+}
+
 func followingHandler(w http.ResponseWriter, r *http.Request) {
 	// require login
 	user, err := getCurrentUser(w, r)

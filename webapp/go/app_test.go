@@ -18,6 +18,7 @@ func getServerMux() *http.ServeMux {
 	mux.HandleFunc("/logout", logoutHandler)
 	mux.HandleFunc("/tweet", tweetHandler)
 	mux.HandleFunc("/following", followingHandler)
+	mux.HandleFunc("/user", userHandler)
 	return mux
 }
 
@@ -390,5 +391,106 @@ func TestFollowingWithLogin(t *testing.T) {
 	date := doc.Find("dt[class='follow-date']").Text()
 	if len(date) <= 0 {
 		t.Errorf("want len more than 0, got %s", date)
+	}
+}
+
+var validUserId = 30
+
+func TestUserWithNotLogin(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	// only redirect test
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	resp, err := client.Get(ts.URL + "/user" + string(validUserId))
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if resp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", resp.StatusCode)
+	}
+	if loc, err := resp.Location(); err == nil && loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+}
+
+func TestUserWithLogin(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	// only redirect test
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar:           jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
+	defer loginResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	// login user = target access user
+	myselfResp, err := client.Get(ts.URL + "/user/" + string(validUserId))
+	defer myselfResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	doc, err := goquery.NewDocumentFromResponse(myselfResp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	follow := doc.Find("form[id='follow-form']").Text()
+	if len(follow) > 0 {
+		t.Errorf("Do not display if the login user and the target user are the same")
+	}
+	tweet := doc.Find("div[class='user']").Text()
+	if len(tweet) <= 0 {
+		t.Errorf("want len more than 0, got %s", tweet)
+	}
+
+	// login user != target access user, and not follow
+	nfResp, err := client.Get(ts.URL + "/user/1000")
+	defer nfResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	doc, err = goquery.NewDocumentFromResponse(nfResp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	follow = doc.Find("form[id='follow-form']").Text()
+	if len(follow) <= 0 {
+		t.Errorf("want len more than 0, got %s", follow)
+	}
+
+	// login user != target access user, and already follow
+	fResp, err := client.Get(ts.URL + "/user/1000")
+	defer fResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	doc, err = goquery.NewDocumentFromResponse(fResp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	follow = doc.Find("form[id='follow-form']").Text()
+	if len(follow) > 0 {
+		t.Errorf("Do not display if already follow")
+	}
+
+	// not exist user
+	neResp, err := client.Get(ts.URL + "/user/0")
+	defer neResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if neResp.StatusCode != 404 {
+		t.Errorf("want 404, got %d", neResp.StatusCode)
 	}
 }
