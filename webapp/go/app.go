@@ -18,25 +18,7 @@ import (
 
 var sessionManager session.Manager
 
-type IndexContent struct {
-	User      *UserModel
-	Following int
-	Followers int
-	Tweets    []*Tweet
-}
-
-type Tweet struct {
-	ID        int
-	UserId    int
-	UserName  string
-	Content   string
-	CreatedAt time.Time
-}
-
-type LoginContent struct {
-	Message string
-}
-
+// DB table mapping
 type UserModel struct {
 	ID        int
 	Name      string
@@ -45,6 +27,41 @@ type UserModel struct {
 	Passhash  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// DB table mapping
+type Tweet struct {
+	ID        int
+	UserId    int
+	UserName  string
+	Content   string
+	CreatedAt time.Time
+}
+
+// template content
+type IndexContent struct {
+	User      *UserModel
+	Following int
+	Followers int
+	Tweets    []*Tweet
+}
+
+// template content
+type LoginContent struct {
+	Message string
+}
+
+// template content
+type FollowingContent struct {
+	FollowingList []*Following
+}
+
+// for FollowingContent table mapping struct
+type Following struct {
+	UserId    int
+	FollowId  int
+	UserName  string
+	CreatedAt time.Time
 }
 
 func getDB() *sql.DB {
@@ -263,10 +280,43 @@ func tweetHandler(w http.ResponseWriter, r *http.Request) {
 
 func followingHandler(w http.ResponseWriter, r *http.Request) {
 	// require login
-	_, err := getCurrentUser(w, r)
+	user, err := getCurrentUser(w, r)
 	if err != nil {
 		http.Redirect(w, r, "/login", 302)
 		return
+	}
+
+	db := getDB()
+	defer db.Close()
+
+	followingStmt, err := db.Prepare("SELECT user_id, follow_id, created_at FROM follow WHERE user_id = ?")
+	defer followingStmt.Close()
+	checkErr(errors.Wrap(err, "failed to following prepared statement"))
+
+	rows, err := followingStmt.Query(user.ID)
+	checkErr(errors.Wrap(err, "failed to select following query"))
+
+	fc := FollowingContent{
+		FollowingList: make([]*Following, 0),
+	}
+	for i := 0; rows.Next(); i++ {
+		f := Following{}
+
+		// query from follow table
+		err := rows.Scan(&f.UserId, &f.FollowId, &f.CreatedAt)
+		checkErr(errors.Wrap(err, "failed to following query scan"))
+
+		// query from user table
+		err = db.QueryRow("SELECT name FROM user WHERE id = ?", f.FollowId).Scan(&f.UserName)
+		checkErr(errors.Wrap(err, "failed to user query scan"))
+
+		fc.FollowingList = append(fc.FollowingList, &f)
+	}
+
+	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/following.tmpl"))
+	err = tmpl.Execute(w, fc)
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to applies following template"))
 	}
 }
 
@@ -281,7 +331,7 @@ func main() {
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/tweet", tweetHandler) // GET and POST
 	// http.HandleFunc("/user", userHandler) // require user_id parameter -> "/user/101"
-	// http.HandleFunc("/following", followingHandler)
+	http.HandleFunc("/following", followingHandler)
 	// http.HandleFunc("/followers", followersHandler)
 	// http.HandleFunc("/follow", followHandler) // POST. require user_id parameter -> "/follow/101"
 	http.HandleFunc("/initialize", initializeHandler)
