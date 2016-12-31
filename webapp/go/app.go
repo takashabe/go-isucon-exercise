@@ -261,6 +261,9 @@ func tweetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func followingHandler(w http.ResponseWriter, r *http.Request) {
+}
+
 func initializeHandler(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
 	exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
