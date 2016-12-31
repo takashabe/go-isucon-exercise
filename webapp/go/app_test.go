@@ -357,3 +357,38 @@ func TestFollowingWithNotLogin(t *testing.T) {
 		t.Errorf("want /login, got %s", loc.Path)
 	}
 }
+
+func TestFollowingWithLogin(t *testing.T) {
+	ts := httptest.NewServer(getServerMux())
+	defer ts.Close()
+
+	// only redirect test
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{
+		Jar:           jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
+	}
+
+	loginResp, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
+	defer loginResp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	resp, err := client.Get(ts.URL + "/following")
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	// parsed html body
+	doc, err := goquery.NewDocumentFromResponse(resp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+
+	date := doc.Find("dt[class='follow-date']").Text()
+	if len(date) <= 0 {
+		t.Errorf("want len more than 0, got %s", date)
+	}
+}
