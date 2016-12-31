@@ -262,6 +262,12 @@ func tweetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func followingHandler(w http.ResponseWriter, r *http.Request) {
+	// require login
+	_, err := getCurrentUser(w, r)
+	if err != nil {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
 }
 
 func initializeHandler(w http.ResponseWriter, r *http.Request) {
