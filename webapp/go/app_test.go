@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -9,17 +10,25 @@ import (
 	"testing"
 
 	"github.com/Puerkitobio/goquery"
+	"github.com/k0kubun/pp"
+	"github.com/takashabe/go-router"
 )
 
-func getServerMux() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/login", loginHandler)
-	mux.HandleFunc("/logout", logoutHandler)
-	mux.HandleFunc("/tweet", tweetHandler)
-	mux.HandleFunc("/following", followingHandler)
-	mux.HandleFunc("/user", userHandler)
-	return mux
+func getServerMux() http.Handler {
+	r := router.NewRouter()
+	r.Get("/", indexHandler)
+	r.Get("/login", getLogin)
+	r.Get("/logout", logoutHandler)
+	r.Get("/tweet", tweetHandler)
+	r.Get("/user/:id", userHandler)
+	r.Get("/following", followingHandler)
+	// r.Get("/followers", followersHandler)
+
+	r.Post("/login", postLogin)
+	r.Post("/tweet", tweetHandler)
+	// r.Post("/follow", followHandler)
+
+	return r
 }
 
 func getDummyLoginParams() url.Values {
@@ -31,10 +40,10 @@ func getDummyLoginParams() url.Values {
 }
 
 func TestLoginWithGet(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(loginHandler))
+	server := httptest.NewServer(getServerMux())
 	defer server.Close()
 
-	res, err := http.Get(server.URL)
+	res, err := http.Get(server.URL + "/login")
 	if err != nil {
 		t.Errorf("want no error, but %v", err)
 	}
@@ -50,7 +59,7 @@ func TestLoginWithGet(t *testing.T) {
 }
 
 func TestLoginWithPost(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(loginHandler))
+	ts := httptest.NewServer(getServerMux())
 	defer ts.Close()
 
 	// only redirect test
@@ -59,9 +68,10 @@ func TestLoginWithPost(t *testing.T) {
 	}
 
 	// Success Authenticate
-	res, err := client.PostForm(ts.URL, getDummyLoginParams())
+	res, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
 	if err != nil {
-		t.Errorf("want no error, but %v", err)
+		t.Errorf("want no error, but %s", err.Error())
+		pp.Println(res)
 	}
 	if res.StatusCode != 302 {
 		t.Errorf("auth: want 302, but %d", res.StatusCode)
@@ -73,7 +83,7 @@ func TestLoginWithPost(t *testing.T) {
 
 	// Empty login params
 	emptyAuth := url.Values{}
-	res, err = client.PostForm(ts.URL, emptyAuth)
+	res, err = client.PostForm(ts.URL+"/login", emptyAuth)
 	if err != nil {
 		t.Errorf("want no error, but %v", err)
 	}
@@ -87,7 +97,7 @@ func TestLoginWithPost(t *testing.T) {
 		"email":    {""},
 		"password": {""},
 	}
-	res, err = client.PostForm(ts.URL, invalidAuth)
+	res, err = client.PostForm(ts.URL+"/login", invalidAuth)
 	if err != nil {
 		t.Errorf("want no error,  but %v", err)
 	}
@@ -405,7 +415,7 @@ func TestUserWithNotLogin(t *testing.T) {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 	}
 
-	resp, err := client.Get(ts.URL + "/user" + string(validUserId))
+	resp, err := client.Get(ts.URL + fmt.Sprintf("/user/%d", validUserId))
 	defer resp.Body.Close()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
@@ -436,7 +446,7 @@ func TestUserWithLogin(t *testing.T) {
 	}
 
 	// login user = target access user
-	myselfResp, err := client.Get(ts.URL + "/user/" + string(validUserId))
+	myselfResp, err := client.Get(ts.URL + fmt.Sprintf("/user/%d", validUserId))
 	defer myselfResp.Body.Close()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
@@ -450,8 +460,8 @@ func TestUserWithLogin(t *testing.T) {
 		t.Errorf("Do not display if the login user and the target user are the same")
 	}
 	tweet := doc.Find("div[class='user']").Text()
-	if len(tweet) <= 0 {
-		t.Errorf("want len more than 0, got %s", tweet)
+	if len(tweet) == 0 {
+		t.Errorf("want len more than 0, got %s", len(tweet))
 	}
 
 	// login user != target access user, and not follow
@@ -465,12 +475,12 @@ func TestUserWithLogin(t *testing.T) {
 		t.Errorf("want no error, got %v", err)
 	}
 	follow = doc.Find("form[id='follow-form']").Text()
-	if len(follow) <= 0 {
+	if len(follow) == 0 {
 		t.Errorf("want len more than 0, got %s", follow)
 	}
 
 	// login user != target access user, and already follow
-	fResp, err := client.Get(ts.URL + "/user/1000")
+	fResp, err := client.Get(ts.URL + "/user/100")
 	defer fResp.Body.Close()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
