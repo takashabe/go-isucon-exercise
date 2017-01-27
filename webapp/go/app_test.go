@@ -10,11 +10,10 @@ import (
 	"testing"
 
 	"github.com/Puerkitobio/goquery"
-	"github.com/k0kubun/pp"
 	"github.com/takashabe/go-router"
 )
 
-func getServerMux() http.Handler {
+func newRouter() http.Handler {
 	r := router.NewRouter()
 	r.Get("/", indexHandler)
 	r.Get("/login", getLogin)
@@ -32,83 +31,67 @@ func getServerMux() http.Handler {
 }
 
 func getDummyLoginParams() url.Values {
-	auth := url.Values{
+	return url.Values{
 		"email":    {"Doris@example.com"},
 		"password": {"Doris"},
 	}
-	return auth
 }
 
-func TestLoginWithGet(t *testing.T) {
-	server := httptest.NewServer(getServerMux())
-	defer server.Close()
-
-	res, err := http.Get(server.URL + "/login")
-	if err != nil {
-		t.Errorf("want no error, but %v", err)
-	}
-	defer res.Body.Close()
-
-	expectedCode := 200
-	if res.StatusCode != expectedCode {
-		t.Errorf("want %d, but %d", expectedCode, res.StatusCode)
-	}
-	if len(res.Cookies()) != 0 {
-		t.Errorf("wont len 0, but len ", len(res.Cookies()))
+func notRedirectClient() *http.Client {
+	return &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 }
 
-func TestLoginWithPost(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+func TestLoginGet(t *testing.T) {
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
-	// only redirect test
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-	}
-
-	// Success Authenticate
-	res, err := client.PostForm(ts.URL+"/login", getDummyLoginParams())
+	resp, err := http.Get(ts.URL + "/login")
 	if err != nil {
-		t.Errorf("want no error, but %s", err.Error())
-		pp.Println(res)
+		t.Errorf("want: no error, got: %v", err.Error())
 	}
-	if res.StatusCode != 302 {
-		t.Errorf("auth: want 302, but %d", res.StatusCode)
-	}
-	if loc, err := res.Location(); err == nil && loc.Path != "/" {
-		t.Errorf("want /, but %v", loc.Path)
-	}
-	res.Body.Close()
+	defer resp.Body.Close()
 
-	// Empty login params
-	emptyAuth := url.Values{}
-	res, err = client.PostForm(ts.URL+"/login", emptyAuth)
-	if err != nil {
-		t.Errorf("want no error, but %v", err)
+	if resp.StatusCode != 200 {
+		t.Errorf("want: %d, got: %d", 200, resp.StatusCode)
 	}
-	if res.StatusCode != 401 {
-		t.Errorf("emptyAuth: want 401, but %d", res.StatusCode)
-	}
-	res.Body.Close()
+}
 
-	// Invalid login params
-	invalidAuth := url.Values{
-		"email":    {""},
-		"password": {""},
+func TestLoginPost(t *testing.T) {
+	ts := httptest.NewServer(newRouter())
+	defer ts.Close()
+
+	cases := []struct {
+		input            url.Values
+		expectStatusCode int
+		expectLocation   string
+	}{
+		{getDummyLoginParams(), 302, "/"},
+		{url.Values{}, 401, ""},
+		{url.Values{"email": {""}, "password": {""}}, 401, ""},
 	}
-	res, err = client.PostForm(ts.URL+"/login", invalidAuth)
-	if err != nil {
-		t.Errorf("want no error,  but %v", err)
+	for i, c := range cases {
+		client := notRedirectClient()
+		resp, err := client.PostForm(ts.URL+"/login", c.input)
+		if err != nil {
+			t.Errorf("#%d: want no error, got %v", i, err.Error())
+		}
+		if c.expectStatusCode != resp.StatusCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectStatusCode, resp.StatusCode)
+		}
+		if c.expectLocation != "" {
+			if loc, _ := resp.Location(); c.expectLocation != loc.Path {
+				t.Errorf("#%d: want %s, got %s", i, c.expectLocation, loc.Path)
+			}
+		}
 	}
-	if res.StatusCode != 401 {
-		t.Errorf("invalidAuth: want 401,  but %d", res.StatusCode)
-	}
-	defer res.Body.Close()
 }
 
 func TestIndexWithNotLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -130,7 +113,7 @@ func TestIndexWithNotLogin(t *testing.T) {
 }
 
 func TestIndexWithLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	jar, _ := cookiejar.New(nil)
@@ -181,7 +164,7 @@ func TestIndexWithLogin(t *testing.T) {
 }
 
 func TestLogoutHandler(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
@@ -227,7 +210,7 @@ func TestLogoutHandler(t *testing.T) {
 }
 
 func TestTweetWithNotLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -265,7 +248,7 @@ func TestTweetWithNotLogin(t *testing.T) {
 }
 
 func TestTweetWithLoginGet(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	jar, _ := cookiejar.New(nil)
@@ -290,7 +273,7 @@ func TestTweetWithLoginGet(t *testing.T) {
 }
 
 func TestTweetWithNotLoginPost(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -315,7 +298,7 @@ func TestTweetWithNotLoginPost(t *testing.T) {
 }
 
 func TestTweetWithLoginPost(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -348,7 +331,7 @@ func TestTweetWithLoginPost(t *testing.T) {
 }
 
 func TestFollowingWithNotLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -370,7 +353,7 @@ func TestFollowingWithNotLogin(t *testing.T) {
 }
 
 func TestFollowingWithLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -407,7 +390,7 @@ func TestFollowingWithLogin(t *testing.T) {
 var validUserId = 30
 
 func TestUserWithNotLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
@@ -429,7 +412,7 @@ func TestUserWithNotLogin(t *testing.T) {
 }
 
 func TestUserWithLogin(t *testing.T) {
-	ts := httptest.NewServer(getServerMux())
+	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
 	// only redirect test
