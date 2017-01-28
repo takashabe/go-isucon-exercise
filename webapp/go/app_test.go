@@ -24,7 +24,7 @@ func newRouter() http.Handler {
 
 	r.Post("/login", postLogin)
 	r.Post("/tweet", postTweet)
-	// r.Post("/follow", followHandler)
+	r.Post("/follow/:id", postFollow)
 
 	return r
 }
@@ -472,5 +472,30 @@ func TestFollowersWithLogin(t *testing.T) {
 	date := doc.Find("dt[class='follow-date']").Text()
 	if len(date) == 0 {
 		t.Errorf("want len more than 0, got %s", date)
+	}
+}
+
+func TestFollow(t *testing.T) {
+	ts := httptest.NewServer(newRouter())
+	defer ts.Close()
+
+	client, loginResp := login(t, ts)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
+	defer loginResp.Body.Close()
+
+	req, err := http.NewRequest("POST", ts.URL+"/follow/100", nil)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 303 {
+		t.Errorf("want 303, got %d", resp.StatusCode)
+	}
+	if loc, err := resp.Location(); err == nil && loc.Path != "/" {
+		t.Errorf("want /, got %s", loc.Path)
 	}
 }

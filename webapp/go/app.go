@@ -466,6 +466,30 @@ func getFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func postFollow(w http.ResponseWriter, r *http.Request, id int) {
+	// require login
+	user, err := getCurrentUser(w, r)
+	if err != nil {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
+	db := getDB()
+	defer db.Close()
+	stmt, err := db.Prepare("INSERT INTO follow (user_id, follow_id) VALUES (?, ?)")
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to prepared statement"))
+		http.NotFound(w, r)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.ID, id)
+	checkErr(errors.Wrap(err, "failed to exec insert tweet"))
+
+	http.Redirect(w, r, "/login", 302)
+}
+
 func getInitialize(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
 	exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
