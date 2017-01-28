@@ -16,7 +16,7 @@
     {{range $i, $v := .Tweets}}
       <div class="tweet">
         <div class="user">
-          <a href="/user/{{$v.UserId}}">{{$v.UserName}}</a>
+          <a href="/user/{{$v.UserID}}">{{$v.UserName}}</a>
         </div>
         <div class="tweet">
           {{$v.Content}}
