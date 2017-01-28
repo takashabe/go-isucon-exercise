@@ -68,6 +68,11 @@ type FollowingContent struct {
 	FollowingList []*Following
 }
 
+// template content
+type FollowersContent struct {
+	UserList []*UserModel
+}
+
 // for FollowingContent table mapping struct
 type Following struct {
 	UserId    int
@@ -154,11 +159,7 @@ func authError(w http.ResponseWriter) {
 	}
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if "/" != r.URL.Path {
-		return
-	}
-
+func getIndex(w http.ResponseWriter, r *http.Request) {
 	user, err := getCurrentUser(w, r)
 	if err != nil {
 		http.Redirect(w, r, "/login", 302)
@@ -249,48 +250,13 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", 302)
 }
 
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
+func getLogout(w http.ResponseWriter, r *http.Request) {
 	sessionManager.SessionDestroy(w, r)
 	http.Redirect(w, r, "/login", 302)
 	return
 }
 
-func tweetHandler(w http.ResponseWriter, r *http.Request) {
-	// POST
-	if r.Method == "POST" {
-		// require login
-		user, err := getCurrentUser(w, r)
-		if err != nil {
-			http.Redirect(w, r, "/login", 303)
-			return
-		}
-
-		err = r.ParseForm()
-		if err != nil {
-			checkErr(errors.Wrap(err, "failed to parsed form on POST tweet"))
-			http.NotFound(w, r)
-			return
-		}
-		content := r.PostFormValue("content")
-		if len(content) <= 0 {
-			http.NotFound(w, r)
-			return
-		}
-
-		db := getDB()
-		defer db.Close()
-
-		stmt, err := db.Prepare("INSERT INTO tweet (user_id, content) VALUES (?,?)")
-		defer stmt.Close()
-		checkErr(errors.Wrap(err, "failed to insert tweet prepared statement"))
-
-		_, err = stmt.Exec(user.ID, content)
-		checkErr(errors.Wrap(err, "failed to exec insert tweet"))
-
-		http.Redirect(w, r, "/", 303)
-		return
-	}
-
+func getTweet(w http.ResponseWriter, r *http.Request) {
 	// require login
 	_, err := getCurrentUser(w, r)
 	if err != nil {
@@ -303,6 +269,39 @@ func tweetHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to applies tweet template"))
 	}
+}
+
+func postTweet(w http.ResponseWriter, r *http.Request) {
+	// require login
+	user, err := getCurrentUser(w, r)
+	if err != nil {
+		http.Redirect(w, r, "/login", 303)
+		return
+	}
+
+	err = r.ParseForm()
+	if err != nil {
+		checkErr(errors.Wrap(err, "failed to parsed form on POST tweet"))
+		http.NotFound(w, r)
+		return
+	}
+	content := r.PostFormValue("content")
+	if len(content) <= 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	db := getDB()
+	defer db.Close()
+
+	stmt, err := db.Prepare("INSERT INTO tweet (user_id, content) VALUES (?,?)")
+	defer stmt.Close()
+	checkErr(errors.Wrap(err, "failed to insert tweet prepared statement"))
+
+	_, err = stmt.Exec(user.ID, content)
+	checkErr(errors.Wrap(err, "failed to exec insert tweet"))
+
+	http.Redirect(w, r, "/", 303)
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request, userID int) {
@@ -381,7 +380,7 @@ func followable(srcID int, dstID int) bool {
 	return cnt == 0
 }
 
-func followingHandler(w http.ResponseWriter, r *http.Request) {
+func getFollowing(w http.ResponseWriter, r *http.Request) {
 	// require login
 	user, err := getCurrentUser(w, r)
 	if err != nil {
@@ -423,7 +422,51 @@ func followingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func initializeHandler(w http.ResponseWriter, r *http.Request) {
+func getFollowers(w http.ResponseWriter, r *http.Request) {
+	// require login
+	user, err := getCurrentUser(w, r)
+	if err != nil {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
+	db := getDB()
+	defer db.Close()
+	stmt, err := db.Prepare("SELECT id, name, created_at " +
+		"FROM user WHERE id IN (SELECT user_id FROM follow WHERE follow_id=?)")
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to prepared statement"))
+		http.NotFound(w, r)
+		return
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(user.ID)
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to query"))
+		http.NotFound(w, r)
+		return
+	}
+	defer rows.Close()
+
+	fc := FollowersContent{
+		UserList: []*UserModel{},
+	}
+	for i := 0; rows.Next(); i++ {
+		u := UserModel{}
+		err := rows.Scan(&u.ID, &u.Name, &u.CreatedAt)
+		checkErr(errors.Wrap(err, "failed to followers query scan"))
+		fc.UserList = append(fc.UserList, &u)
+	}
+
+	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/followers.tmpl"))
+	err = tmpl.Execute(w, fc)
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to applies following template"))
+	}
+}
+
+func getInitialize(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
 	exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
 }

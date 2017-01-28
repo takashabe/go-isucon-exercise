@@ -14,16 +14,16 @@ import (
 
 func newRouter() http.Handler {
 	r := router.NewRouter()
-	r.Get("/", indexHandler)
+	r.Get("/", getIndex)
 	r.Get("/login", getLogin)
-	r.Get("/logout", logoutHandler)
-	r.Get("/tweet", tweetHandler)
+	r.Get("/logout", getLogout)
+	r.Get("/tweet", getTweet)
 	r.Get("/user/:id", userHandler)
-	r.Get("/following", followingHandler)
-	// r.Get("/followers", followersHandler)
+	r.Get("/following", getFollowing)
+	r.Get("/followers", getFollowers)
 
 	r.Post("/login", postLogin)
-	r.Post("/tweet", tweetHandler)
+	r.Post("/tweet", postTweet)
 	// r.Post("/follow", followHandler)
 
 	return r
@@ -432,5 +432,45 @@ func TestUserWithLogin(t *testing.T) {
 		if v := doc.Find("div[class='user']").Text(); c.expectTweetExist && len(v) <= 0 {
 			t.Errorf("#%d want exist id='follow-form'", i)
 		}
+	}
+}
+
+func TestFollowersWithNotLogin(t *testing.T) {
+	ts := httptest.NewServer(newRouter())
+	defer ts.Close()
+
+	client := notRedirectClient()
+	resp, err := client.Get(ts.URL + "/user/30")
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if resp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", resp.StatusCode)
+	}
+	if loc, err := resp.Location(); err == nil && loc.Path != "/login" {
+		t.Errorf("want /login, got %s", loc.Path)
+	}
+}
+
+func TestFollowersWithLogin(t *testing.T) {
+	ts := httptest.NewServer(newRouter())
+	defer ts.Close()
+
+	client, loginResp := login(t, ts)
+	defer loginResp.Body.Close()
+
+	resp, err := client.Get(ts.URL + "/followers")
+	defer resp.Body.Close()
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	doc, err := goquery.NewDocumentFromResponse(resp)
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	date := doc.Find("dt[class='follow-date']").Text()
+	if len(date) == 0 {
+		t.Errorf("want len more than 0, got %s", date)
 	}
 }

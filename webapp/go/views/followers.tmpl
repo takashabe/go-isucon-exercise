@@ -1,8 +1,11 @@
-<h2>Followers list</h2>
-<div class="row panel panel-primary" id="followers">
-  <dl>
-    <% followers.each do |f| %>
-    <dt class="follow-date"><%= f[:created_at] %></dt><dd class="follow-follow"><a href="/user/<%= f[:id] %>"><%= f[:name] %></a></dd>
-    <% end %>
-  </dl>
-</div>
+{{ define "content" }}
+  <h2>Followers list</h2>
+  <div class="row panel panel-primary" id="followers">
+    <dl>
+      {{ range $v := .UserList }}
+        <dt class="follow-date">{{ $v.CreatedAt }}</dt>
+        <dd class="follow-follow"><a href="/user/{{ $v.ID }}">{{ $v.Name }}</a></dd>
+      {{ end }}
+    </dl>
+  </div>
+{{ end }}
