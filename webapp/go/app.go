@@ -18,9 +18,19 @@ import (
 var (
 	ErrUnregisteredUser = errors.New("unregistered user")
 	ErrAuthentication   = errors.New("failed authentication")
+
+	server *IsuconServer
 )
 
-var sessionManager session.Manager
+type Server interface {
+	NewDB() (*sql.DB, error)
+	NewSession() (*session.Manager, error)
+}
+
+type IsuconServer struct {
+	db      *sql.DB
+	session *session.Manager
+}
 
 // DB table mapping
 type UserModel struct {
@@ -81,6 +91,22 @@ type Following struct {
 	CreatedAt time.Time
 }
 
+func (s *IsuconServer) NewDB() (*sql.DB, error) {
+	db, err := sql.Open("mysql", "isucon@/isucon?parseTime=true")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open database")
+	}
+	return db, nil
+}
+
+func (s *IsuconServer) NewSession() (*session.Manager, error) {
+	manager, err := session.NewManager("memory", "gosess", 3600)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create session manager")
+	}
+	return manager, nil
+}
+
 func getDB() *sql.DB {
 	db, err := sql.Open("mysql", "isucon@/isucon?parseTime=true")
 	if err != nil {
@@ -90,7 +116,7 @@ func getDB() *sql.DB {
 }
 
 func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) {
-	s, err := sessionManager.SessionStart(w, r)
+	s, err := server.session.SessionStart(w, r)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to session start")
 	}
@@ -103,7 +129,7 @@ func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) 
 	if err != nil {
 		if errors.Cause(err) == ErrUnregisteredUser {
 			s.Delete(id)
-			sessionManager.SessionDestroy(w, r)
+			server.session.SessionDestroy(w, r)
 		}
 		return nil, err
 	}
@@ -240,7 +266,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, err := sessionManager.SessionStart(w, r)
+	s, err := server.session.SessionStart(w, r)
 	if err != nil {
 		authError(w)
 		return
@@ -251,7 +277,7 @@ func postLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLogout(w http.ResponseWriter, r *http.Request) {
-	sessionManager.SessionDestroy(w, r)
+	server.session.SessionDestroy(w, r)
 	http.Redirect(w, r, "/login", 302)
 	return
 }
@@ -499,9 +525,18 @@ func main() {
 }
 
 func init() {
-	manager, err := session.NewManager("memory", "gosess", 3600)
-	checkErr(errors.Wrap(err, "failed to create session manager"))
-	sessionManager = *manager
+	s := &IsuconServer{}
+	db, err := s.NewDB()
+	if err != nil {
+		panic(err.Error())
+	}
+	session, err := s.NewSession()
+	if err != nil {
+		panic(err.Error())
+	}
+	s.db = db
+	s.session = session
+	server = s
 }
 
 func checkErr(err error) {
