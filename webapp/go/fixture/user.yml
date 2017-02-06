@@ -1,0 +1,23 @@
+table: user
+record:
+  - id: 1
+    name: Helen
+    email: Helen@example.com
+    salt: BTg69rqxAvxD31tJ
+    passhash: 036f5fb8a8fa804c1fb816cbded889243012f889ff0f401444e3eced9c40a6b3
+    created_at: 2016-01-19 05:19:05
+    updated_at: 2016-01-19 05:19:05
+  - id: 2
+    name: Howard
+    email: Howard@example.com
+    salt: NUtWFBuiXuxJaxCx
+    passhash: 55e572b7dd59510cb3198a81c878a606a39864f71ea045bb63ef5afda799ff7b
+    created_at: 2016-01-19 05:19:05
+    updated_at: 2016-01-19 05:19:05
+  - id: 3
+    name: Teresa
+    email: Teresa@example.com
+    salt: FoNfv7wfNSkhLJga
+    passhash: 8c1ea674fd5f92bd38e4ad4a95bde7004490ea082e3f893a16c82a1718b80ccd
+    created_at: 2016-01-19 05:19:05
+    updated_at: 2016-01-19 05:19:05

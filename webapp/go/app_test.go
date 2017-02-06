@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -9,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/Puerkitobio/goquery"
+	"github.com/takashabe/go-fixture"
+	_ "github.com/takashabe/go-fixture/mysql"
 	"github.com/takashabe/go-router"
 )
 
@@ -29,10 +32,24 @@ func newRouter() http.Handler {
 	return r
 }
 
+func LoadFixture(t *testing.T) {
+	db, err := sql.Open("mysql", "isucon@/isucon_test")
+	if err != nil {
+		t.Fatal("failed to db open")
+	}
+	defer db.Close()
+
+	f := fixture.NewFixture(db, "mysql")
+	f.LoadSQL("fixture/create.sql")
+	f.Load("fixture/user.yml")
+	f.Load("fixture/tweet.yml")
+	f.Load("fixture/follow.yml")
+}
+
 func getDummyLoginParams() url.Values {
 	return url.Values{
-		"email":    {"Doris@example.com"},
-		"password": {"Doris"},
+		"email":    {"Helen@example.com"},
+		"password": {"Helen"},
 	}
 }
 
