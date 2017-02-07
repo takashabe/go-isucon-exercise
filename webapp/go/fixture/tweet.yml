@@ -2,11 +2,21 @@ table: tweet
 record:
   - id: 1
     user_id: 1
-    content: 白靴の健脚ぶりや男坂
+    content: Foo
     created_at: 2016-01-19 05:19:11
     updated_at: 2016-01-19 05:19:11
   - id: 2
     user_id: 1
-    content: キャンプの火煽るは魑魅か魍魎か
+    content: Bar
+    created_at: 2016-01-19 05:19:11
+    updated_at: 2016-01-19 05:19:11
+  - id: 3
+    user_id: 2
+    content: Piyo
+    created_at: 2016-01-19 05:19:11
+    updated_at: 2016-01-19 05:19:11
+  - id: 4
+    user_id: 3
+    content: Fuga
     created_at: 2016-01-19 05:19:11
     updated_at: 2016-01-19 05:19:11

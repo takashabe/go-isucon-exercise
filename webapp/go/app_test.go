@@ -10,10 +10,24 @@ import (
 	"testing"
 
 	"github.com/Puerkitobio/goquery"
+	"github.com/pkg/errors"
 	"github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql"
 	"github.com/takashabe/go-router"
 )
+
+// Test Server
+type TestServer struct {
+	db *sql.DB
+}
+
+func (s *TestServer) NewDB() (*sql.DB, error) {
+	db, err := sql.Open("mysql", "isucon@/isucon_test?parseTime=true")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open database")
+	}
+	return db, nil
+}
 
 func newRouter() http.Handler {
 	r := router.NewRouter()
@@ -35,7 +49,7 @@ func newRouter() http.Handler {
 func LoadFixture(t *testing.T) {
 	db, err := sql.Open("mysql", "isucon@/isucon_test")
 	if err != nil {
-		t.Fatal("failed to db open")
+		t.Fatal(err.Error())
 	}
 	defer db.Close()
 
@@ -44,6 +58,17 @@ func LoadFixture(t *testing.T) {
 	f.Load("fixture/user.yml")
 	f.Load("fixture/tweet.yml")
 	f.Load("fixture/follow.yml")
+}
+
+func setupDB(t *testing.T) {
+	LoadFixture(t)
+	server := &TestServer{}
+	db, err := server.NewDB()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	server.db = db
+	helper = server
 }
 
 func getDummyLoginParams() url.Values {
@@ -78,6 +103,7 @@ func login(t *testing.T, ts *httptest.Server) (*http.Client, *http.Response) {
 }
 
 func TestLoginGet(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -93,6 +119,7 @@ func TestLoginGet(t *testing.T) {
 }
 
 func TestLoginPost(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -123,6 +150,7 @@ func TestLoginPost(t *testing.T) {
 }
 
 func TestIndexWithNotLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -141,6 +169,7 @@ func TestIndexWithNotLogin(t *testing.T) {
 }
 
 func TestIndexWithLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -167,7 +196,7 @@ func TestIndexWithLogin(t *testing.T) {
 	}
 
 	name := doc.Find("dd[id='prof-name']").Text()
-	wantName := "Doris"
+	wantName := "Helen"
 	if name != wantName {
 		t.Errorf("want %s, got %s", wantName, name)
 	}
@@ -189,6 +218,7 @@ func TestIndexWithLogin(t *testing.T) {
 }
 
 func TestLoginAndLogout(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 
 	client, loginResp := login(t, ts)
@@ -227,6 +257,7 @@ func TestLoginAndLogout(t *testing.T) {
 }
 
 func TestTweetWithNotLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -254,8 +285,8 @@ func TestTweetWithNotLogin(t *testing.T) {
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
-	if postResp.StatusCode != 303 {
-		t.Errorf("want 303, got %d", postResp.StatusCode)
+	if postResp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", postResp.StatusCode)
 	}
 	if loc, err := postResp.Location(); err == nil && loc.Path != "/login" {
 		t.Errorf("want /login, got %s", loc.Path)
@@ -263,6 +294,7 @@ func TestTweetWithNotLogin(t *testing.T) {
 }
 
 func TestTweetWithLoginGet(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -280,6 +312,7 @@ func TestTweetWithLoginGet(t *testing.T) {
 }
 
 func TestTweetWithNotLoginPost(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -292,8 +325,8 @@ func TestTweetWithNotLoginPost(t *testing.T) {
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
-	if tweetResp.StatusCode != 303 {
-		t.Errorf("want 303, got %d", tweetResp.StatusCode)
+	if tweetResp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", tweetResp.StatusCode)
 	}
 	if loc, err := tweetResp.Location(); err == nil && loc.Path != "/login" {
 		t.Errorf("want /login, got %s", loc.Path)
@@ -301,6 +334,7 @@ func TestTweetWithNotLoginPost(t *testing.T) {
 }
 
 func TestTweetWithLoginPost(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -324,8 +358,8 @@ func TestTweetWithLoginPost(t *testing.T) {
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
-	if tweetResp.StatusCode != 303 {
-		t.Errorf("want 303, got %d", tweetResp.StatusCode)
+	if tweetResp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", tweetResp.StatusCode)
 	}
 	if loc, err := tweetResp.Location(); err == nil && loc.Path != "/" {
 		t.Errorf("want /, got %s", loc.Path)
@@ -333,6 +367,7 @@ func TestTweetWithLoginPost(t *testing.T) {
 }
 
 func TestFollowingWithNotLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -351,6 +386,7 @@ func TestFollowingWithNotLogin(t *testing.T) {
 }
 
 func TestFollowingWithLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -385,6 +421,7 @@ func TestFollowingWithLogin(t *testing.T) {
 }
 
 func TestUserWithNotLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -409,13 +446,14 @@ func TestUserWithLogin(t *testing.T) {
 		expectFollowExist bool
 		expectTweetExist  bool
 	}{
-		{"/user/30", 200, false, true},
-		{"/user/1000", 200, true, true},
-		{"/user/100", 200, false, true},
+		{"/user/1", 200, false, true},
+		{"/user/2", 200, true, true},
+		{"/user/3", 200, false, true},
 		{"/user/0", 404, false, false},
 	}
 	for i, c := range cases {
 		// login
+		setupDB(t)
 		ts := httptest.NewServer(newRouter())
 		defer ts.Close()
 		jar, _ := cookiejar.New(nil)
@@ -446,13 +484,14 @@ func TestUserWithLogin(t *testing.T) {
 		if v := doc.Find("form[id='follow-form']").Text(); c.expectFollowExist && len(v) <= 0 {
 			t.Errorf("#%d want exist id='follow-form'", i)
 		}
-		if v := doc.Find("div[class='user']").Text(); c.expectTweetExist && len(v) <= 0 {
-			t.Errorf("#%d want exist id='follow-form'", i)
+		if v := doc.Find("div[class='tweet']").Text(); c.expectTweetExist && len(v) <= 0 {
+			t.Errorf("#%d want exist class='tweet'", i)
 		}
 	}
 }
 
 func TestFollowersWithNotLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -471,6 +510,7 @@ func TestFollowersWithNotLogin(t *testing.T) {
 }
 
 func TestFollowersWithLogin(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -493,6 +533,7 @@ func TestFollowersWithLogin(t *testing.T) {
 }
 
 func TestFollow(t *testing.T) {
+	setupDB(t)
 	ts := httptest.NewServer(newRouter())
 	defer ts.Close()
 
@@ -500,7 +541,7 @@ func TestFollow(t *testing.T) {
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }
 	defer loginResp.Body.Close()
 
-	req, err := http.NewRequest("POST", ts.URL+"/follow/100", nil)
+	req, err := http.NewRequest("POST", ts.URL+"/follow/2", nil)
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}
@@ -509,8 +550,8 @@ func TestFollow(t *testing.T) {
 		t.Errorf("want no error, got %v", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 303 {
-		t.Errorf("want 303, got %d", resp.StatusCode)
+	if resp.StatusCode != 302 {
+		t.Errorf("want 302, got %d", resp.StatusCode)
 	}
 	if loc, err := resp.Location(); err == nil && loc.Path != "/" {
 		t.Errorf("want /, got %s", loc.Path)
