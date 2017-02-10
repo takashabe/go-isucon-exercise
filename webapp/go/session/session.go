@@ -104,6 +104,7 @@ func (manager *Manager) SessionDestroy(w http.ResponseWriter, r *http.Request) e
 	defer manager.lock.Unlock()
 	manager.provider.SessionDestroy(cookie.Value)
 	// update cookie
+	cookie.Value = ""
 	cookie.Expires = time.Now()
 	cookie.MaxAge = -1
 	http.SetCookie(w, cookie)
