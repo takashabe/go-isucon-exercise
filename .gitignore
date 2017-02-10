@@ -26,3 +26,5 @@ _testmain.go
 vendor/
 
 cover.out
+
+.idea/
