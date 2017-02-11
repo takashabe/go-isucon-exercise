@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
 	_ "github.com/takashabe/go-isucon-exercise/webapp/go/session/memory"
+	router "github.com/takashabe/go-router"
 )
 
 var (
@@ -92,9 +93,7 @@ type IsuconServer struct {
 }
 
 func (s *IsuconServer) NewDB() (*sql.DB, error) {
-	if s.db != nil {
-		return s.db, nil
-	}
+	// TODO: DB cache
 	db, err := sql.Open("mysql", "isucon@/isucon?parseTime=true")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open database")
@@ -514,7 +513,10 @@ func postFollow(w http.ResponseWriter, r *http.Request, id int) {
 
 func getInitialize(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
-	exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
+	_, err := exec.Command(os.Getenv("SHELL"), "-c", "data/tools/init.sh").Output()
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to initialize"))
+	}
 }
 
 func main() {
@@ -524,6 +526,27 @@ func main() {
 		panic(err.Error())
 	}
 	s.db = db
+	defer db.Close()
+	helper = s
+
+	r := router.NewRouter()
+	r.Get("/", getIndex)
+	r.Get("/login", getLogin)
+	r.Get("/logout", getLogout)
+	r.Get("/tweet", getTweet)
+	r.Get("/user/:id", userHandler)
+	r.Get("/following", getFollowing)
+	r.Get("/followers", getFollowers)
+	r.Get("/initialize", getInitialize)
+
+	r.Post("/login", postLogin)
+	r.Post("/tweet", postTweet)
+	r.Post("/follow/:id", postFollow)
+
+	r.ServeFile("/css/*filepath", http.Dir("static/css"))
+
+	log.Println("running server...")
+	http.ListenAndServe(":8080", r)
 }
 
 func init() {
