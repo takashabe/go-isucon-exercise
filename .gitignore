@@ -25,6 +25,8 @@ _testmain.go
 
 vendor/
 
-cover.out
-
 .idea/
+
+# binary
+app_linux
+app_darwin
