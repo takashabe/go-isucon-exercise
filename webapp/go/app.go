@@ -10,11 +10,10 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-isucon-exercise/webapp/go/session"
-	_ "github.com/takashabe/go-isucon-exercise/webapp/go/session/memory"
-	router "github.com/takashabe/go-router"
+	"github.com/takashabe/go-router"
+	"github.com/takashabe/go-session"
+	_ "github.com/takashabe/go-session/memory"
 )
 
 var (
@@ -228,7 +227,6 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 	err = tmpl.Execute(w, content)
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to applies index template"))
-		pp.Println(content)
 	}
 }
 
