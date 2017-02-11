@@ -30,3 +30,19 @@ vendor/
 # binary
 app_linux
 app_darwin
+
+### Scala ###
+*.class
+*.log
+
+# sbt specific
+.cache
+.history
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+logs/
