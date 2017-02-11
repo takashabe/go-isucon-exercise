@@ -58,7 +58,7 @@ class ScenarioManager extends LazyLogging {
   def run(params: List[Parameter], option: CliOption): Result = {
     val scenarios = orders()
     val sessions = createSession(params)
-    val config = new Config("http", option.host, 80, "isucon", 3*60*1000)
+    val config = new Config("http", option.host, option.port, "isucon", 3*60*1000)
 
     var doneResults = List[Result]()
     for(step <- scenarios) {
