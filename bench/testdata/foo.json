@@ -1,0 +1,6 @@
+{
+  "parameters": [
+    { "id":1, "name":"a", "email":"b", "password":"c" },
+    { "id":2, "name":"d", "email":"e", "password":"f" }
+  ]
+}

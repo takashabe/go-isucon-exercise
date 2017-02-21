@@ -1,14 +1,16 @@
 package main
 
+import "net/http"
+
 type Checker struct {
-	worker Worker
-	ctx    Context
-	result *Result
+	ctx         Ctx
+	result      *Result
+	requestName string
+	response    http.Response
 }
 
-func newChecker(w Worker, c Context, r Result) *Checker {
+func newChecker(c Ctx, r *Result) *Checker {
 	return &Checker{
-		worker: w,
 		ctx:    c,
 		result: r,
 	}

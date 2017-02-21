@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -13,41 +14,41 @@ func TestAddResponse(t *testing.T) {
 		{
 			202,
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{success: 1},
-				violations:   make([]*Violation, 0),
+				RequestCount: 1,
+				Response:     &ResponseCounter{success: 1},
+				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			302,
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{redirect: 1},
-				violations:   make([]*Violation, 0),
+				RequestCount: 1,
+				Response:     &ResponseCounter{redirect: 1},
+				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			404,
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{clientError: 1},
-				violations:   make([]*Violation, 0),
+				RequestCount: 1,
+				Response:     &ResponseCounter{clientError: 1},
+				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			999,
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{serverError: 1},
-				violations:   make([]*Violation, 0),
+				RequestCount: 1,
+				Response:     &ResponseCounter{serverError: 1},
+				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			0,
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{serverError: 1},
-				violations:   make([]*Violation, 0),
+				RequestCount: 1,
+				Response:     &ResponseCounter{serverError: 1},
+				Violations:   make([]*Violation, 0),
 			},
 		},
 	}
@@ -66,12 +67,12 @@ func TestAddResponseException(t *testing.T) {
 	}{
 		{
 			&Result{
-				requestCount: 1,
-				response:     &ResponseCounter{success: 200},
+				RequestCount: 1,
+				Response:     &ResponseCounter{success: 200},
 			},
 			&Result{
-				requestCount: 2,
-				response:     &ResponseCounter{success: 200, exception: 1},
+				RequestCount: 2,
+				Response:     &ResponseCounter{success: 200, exception: 1},
 			},
 		},
 	}
@@ -95,10 +96,10 @@ func TestAddViolation(t *testing.T) {
 			"bar",
 			&Result{},
 			&Result{
-				violations: []*Violation{&Violation{
-					requestName: "foo",
-					cause:       "bar",
-					count:       1,
+				Violations: []*Violation{&Violation{
+					RequestName: "foo",
+					Cause:       "bar",
+					Count:       1,
 				}},
 			},
 		},
@@ -106,30 +107,30 @@ func TestAddViolation(t *testing.T) {
 			"foo",
 			"bar",
 			&Result{
-				violations: []*Violation{
+				Violations: []*Violation{
 					&Violation{
-						requestName: "foo",
-						cause:       "bar",
-						count:       1,
+						RequestName: "foo",
+						Cause:       "bar",
+						Count:       1,
 					},
 					&Violation{
-						requestName: "hoge",
-						cause:       "piyo",
-						count:       2,
+						RequestName: "hoge",
+						Cause:       "piyo",
+						Count:       2,
 					},
 				},
 			},
 			&Result{
-				violations: []*Violation{
+				Violations: []*Violation{
 					&Violation{
-						requestName: "foo",
-						cause:       "bar",
-						count:       2,
+						RequestName: "foo",
+						Cause:       "bar",
+						Count:       2,
 					},
 					&Violation{
-						requestName: "hoge",
-						cause:       "piyo",
-						count:       2,
+						RequestName: "hoge",
+						Cause:       "piyo",
+						Count:       2,
 					},
 				},
 			},
@@ -151,64 +152,64 @@ func TestMerge(t *testing.T) {
 	}{
 		{
 			&Result{
-				valid:        false,
-				requestCount: 1,
-				elapsedTime:  300,
-				response:     &ResponseCounter{success: 1, exception: 1},
-				violations: []*Violation{
+				Valid:        false,
+				RequestCount: 1,
+				ElapsedTime:  300,
+				Response:     &ResponseCounter{success: 1, exception: 1},
+				Violations: []*Violation{
 					&Violation{
-						requestName: "foo",
-						cause:       "bar",
-						count:       1,
+						RequestName: "foo",
+						Cause:       "bar",
+						Count:       1,
 					},
 				},
 			},
 			Result{
-				valid:        true,
-				requestCount: 1,
-				elapsedTime:  300,
-				response:     &ResponseCounter{success: 1},
-				violations: []*Violation{
+				Valid:        true,
+				RequestCount: 1,
+				ElapsedTime:  300,
+				Response:     &ResponseCounter{success: 1},
+				Violations: []*Violation{
 					&Violation{
-						requestName: "foo",
-						cause:       "bar",
-						count:       1,
+						RequestName: "foo",
+						Cause:       "bar",
+						Count:       1,
 					},
 					&Violation{
-						requestName: "hoge",
-						cause:       "piyo",
-						count:       1,
+						RequestName: "hoge",
+						Cause:       "piyo",
+						Count:       1,
 					},
 				},
 			},
 			&Result{
-				valid:        false,
-				requestCount: 2,
-				elapsedTime:  600,
-				response:     &ResponseCounter{success: 2, exception: 1},
-				violations: []*Violation{
+				Valid:        false,
+				RequestCount: 2,
+				ElapsedTime:  600,
+				Response:     &ResponseCounter{success: 2, exception: 1},
+				Violations: []*Violation{
 					&Violation{
-						requestName: "foo",
-						cause:       "bar",
-						count:       2,
+						RequestName: "foo",
+						Cause:       "bar",
+						Count:       2,
 					},
 					&Violation{
-						requestName: "hoge",
-						cause:       "piyo",
-						count:       1,
+						RequestName: "hoge",
+						Cause:       "piyo",
+						Count:       1,
 					},
 				},
 			},
 		},
 		{
 			&Result{
-				response: &ResponseCounter{success: 1},
+				Response: &ResponseCounter{success: 1},
 			},
 			Result{
-				response: newResponse(),
+				Response: newResponse(),
 			},
 			&Result{
-				response: &ResponseCounter{success: 1},
+				Response: &ResponseCounter{success: 1},
 			},
 		},
 	}
@@ -217,5 +218,54 @@ func TestMerge(t *testing.T) {
 		if !reflect.DeepEqual(got, c.expect) {
 			t.Errorf("#%d: want: %v, got: %v", i, c.expect, got)
 		}
+	}
+}
+
+func TestToJson(t *testing.T) {
+	base := Result{
+		Valid:        true,
+		RequestCount: 10,
+		ElapsedTime:  300,
+		Response: &ResponseCounter{
+			success:   5,
+			exception: 5,
+		},
+		Violations: []*Violation{
+			&Violation{
+				RequestName: "a",
+				Cause:       "b",
+				Count:       2,
+			},
+			&Violation{
+				RequestName: "c",
+				Cause:       "d",
+				Count:       2,
+			},
+		},
+	}
+	want := []byte(`{
+	"valid": true,
+	"request_count": 10,
+	"elapsed_time": 300,
+	"response": {},
+	"violations": [
+		{
+			"request_type": "a",
+			"description": "b",
+			"num": 2
+		},
+		{
+			"request_type": "c",
+			"description": "d",
+			"num": 2
+		}
+	]
+}`)
+	got, err := json.MarshalIndent(base, "", "\t")
+	if err != nil {
+		t.Errorf("want no error, got %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("want %v, got %v", string(want), string(got))
 	}
 }

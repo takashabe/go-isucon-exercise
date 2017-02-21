@@ -2,86 +2,86 @@ package main
 
 // Result is save benchmark results
 type Result struct {
-	valid        bool
-	requestCount int
-	elapsedTime  int
-	response     *ResponseCounter
-	violations   []*Violation
+	Valid        bool             `json:"valid"`
+	RequestCount int              `json:"request_count"`
+	ElapsedTime  int              `json:"elapsed_time"`
+	Response     *ResponseCounter `json:"response"`
+	Violations   []*Violation     `json:"violations"`
 }
 
 // Violation is save failed requests with cause
 type Violation struct {
-	requestName string
-	cause       string
-	count       int
+	RequestName string `json:"request_type"`
+	Cause       string `json:"description"`
+	Count       int    `json:"num"`
 }
 
 func newResult() *Result {
 	return &Result{
-		response:   newResponse(),
-		violations: make([]*Violation, 0),
+		Response:   newResponse(),
+		Violations: make([]*Violation, 0),
 	}
 }
 
 func (r *Result) Merge(dst Result) *Result {
-	r.valid = r.valid && dst.valid
-	r.requestCount += dst.requestCount
-	r.elapsedTime += dst.elapsedTime
+	r.Valid = r.Valid && dst.Valid
+	r.RequestCount += dst.RequestCount
+	r.ElapsedTime += dst.ElapsedTime
 
-	r.response.success += dst.response.success
-	r.response.redirect += dst.response.redirect
-	r.response.clientError += dst.response.clientError
-	r.response.serverError += dst.response.serverError
-	r.response.exception += dst.response.exception
+	r.Response.success += dst.Response.success
+	r.Response.redirect += dst.Response.redirect
+	r.Response.clientError += dst.Response.clientError
+	r.Response.serverError += dst.Response.serverError
+	r.Response.exception += dst.Response.exception
 
-	for _, dv := range dst.violations {
-		if rv, ok := r.getViolation(dv.requestName, dv.cause); ok {
-			rv.count += dv.count
+	for _, dv := range dst.Violations {
+		if rv, ok := r.getViolation(dv.RequestName, dv.Cause); ok {
+			rv.Count += dv.Count
 			continue
 		}
-		r.violations = append(r.violations, dv)
+		r.Violations = append(r.Violations, dv)
 	}
 
 	return r
 }
 
 func (r *Result) addResponse(code int) *Result {
-	r.requestCount++
+	r.RequestCount++
 	if 200 <= code && code < 300 {
-		r.response.addSuccess()
+		r.Response.addSuccess()
 	} else if 300 <= code && code < 400 {
-		r.response.addRedirect()
+		r.Response.addRedirect()
 	} else if 400 <= code && code < 500 {
-		r.response.addClientError()
+		r.Response.addClientError()
 	} else {
-		r.response.addServerError()
+		r.Response.addServerError()
 	}
 	return r
 }
 
 func (r *Result) addResponseException() *Result {
-	r.requestCount++
-	r.response.addException()
+	r.RequestCount++
+	r.Response.addException()
 	return r
 }
 
 func (r *Result) addViolation(name, cause string) *Result {
 	if v, ok := r.getViolation(name, cause); ok {
-		v.count++
+		v.Count++
 		return r
 	}
 
-	r.violations = append(r.violations, &Violation{
-		requestName: name,
-		cause:       cause,
-		count:       1,
+	r.Violations = append(r.Violations, &Violation{
+		RequestName: name,
+		Cause:       cause,
+		Count:       1,
 	})
 	return r
 }
 
 func (r *Result) getViolation(name, cause string) (*Violation, bool) {
-	for _, v := range r.violations {
-		if v.requestName == name && v.cause == cause {
+	for _, v := range r.Violations {
+		if v.RequestName == name && v.Cause == cause {
 			return v, true
 		}
 	}
