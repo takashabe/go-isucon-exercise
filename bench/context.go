@@ -36,5 +36,5 @@ func newCtx() *Ctx {
 }
 
 func (c *Ctx) uri(path string) string {
-	return fmt.Sprintf("%s://%s")
+	return fmt.Sprintf("%s://%s:%d%s", c.schema, c.host, c.port, path)
 }

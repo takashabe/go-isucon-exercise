@@ -27,6 +27,10 @@ type Master struct {
 }
 
 func (m *Master) start() {
+	// TODO
+	// 1. create workers
+	// 2. run for each workers with order()
+	// 3. sum return results from worker.run
 }
 
 func (m *Master) createSessions(path string) (*UserSchemas, error) {

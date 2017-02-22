@@ -3,19 +3,21 @@ package main
 import "net/http"
 
 // Worker is send requests
+// TODO: export check request functions from Worker
 type Worker struct {
-	task   Task
 	ctx    Ctx
 	result *Result
 }
 
-// Need subclass
-type Task interface {
-	Task()
+func newWorker() *Worker {
+	return &Worker{
+		ctx:    *newCtx(),
+		result: newResult(),
+	}
 }
 
 func (w *Worker) getAndCheck(sess *Session, path, requestName string, check func(c *Checker)) {
-	req, err := http.NewRequest("GET", path, nil)
+	req, err := http.NewRequest("GET", w.ctx.uri(path), nil)
 	if err != nil {
 		return
 	}
@@ -43,6 +45,11 @@ func (w *Worker) requestAndCheck(req *http.Request, client *http.Client, request
 
 	w.result.addResponse(res.StatusCode)
 	if check != nil {
-		check(newChecker(w.ctx, w.result))
+		check(&Checker{
+			ctx:         w.ctx,
+			result:      w.result,
+			requestName: requestName,
+			response:    *res,
+		})
 	}
 }
