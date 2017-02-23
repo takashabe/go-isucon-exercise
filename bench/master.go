@@ -23,6 +23,12 @@ type UserSchema struct {
 	Password string `json:"password"`
 }
 
+// Task implement for each type of benchmark
+type Task interface {
+	Task()
+	FinishHook(r Result) Result
+}
+
 type Master struct {
 }
 

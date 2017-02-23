@@ -1,12 +1,5 @@
 package main
 
-// TODO: Taskをtaskフォルダ配下にして、Taskインタフェースを外出しにして他のTaskも書き始める.
-// Task implement for each type of benchmark
-type Task interface {
-	Task()
-	FinishHook(r Result) Result
-}
-
 // InitTask is initialize
 type InitTask struct {
 	w Worker
