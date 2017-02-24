@@ -9,6 +9,7 @@ import (
 type Checker struct {
 	ctx         Ctx
 	result      *Result
+	path        string
 	requestName string
 	response    http.Response
 }
@@ -17,11 +18,7 @@ func (c *Checker) getStatusCode() int {
 	return c.response.StatusCode
 }
 
-func (c *Checker) getPath() string {
-	return c.response.Request.URL.Path
-}
-
-func (c *Checker) addviolation(cause string) {
+func (c *Checker) addViolation(cause string) {
 	c.result.addViolation(c.requestName, cause)
 }
 
@@ -31,14 +28,14 @@ func (c *Checker) hasViolation() bool {
 
 func (c *Checker) isStatusCode(code int) {
 	if c.getStatusCode() != code {
-		c.addViolation(fmt.Sprintf("パス '%s' へのレスポンスコード %d が期待されていましたが %d でした", c.getPath(), code, c.getStatusCode()))
+		c.addViolation(fmt.Sprintf("パス '%s' へのレスポンスコード %d が期待されていましたが %d でした", c.path, code, c.getStatusCode()))
 	}
 }
 
 func (c *Checker) isRedirect(path string) {
 	// check HTTP status code
 	wantStatusCode := []int{302, 303, 307}
-	isValidStatusCode = false
+	isValidStatusCode := false
 	for _, v := range wantStatusCode {
 		if v == c.getStatusCode() {
 			isValidStatusCode = true
@@ -46,14 +43,14 @@ func (c *Checker) isRedirect(path string) {
 		}
 	}
 	if isValidStatusCode {
-		c.addviolation(fmt.Sprintf("レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした", c.getStatusCode()))
+		c.addViolation(fmt.Sprintf("レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした", c.getStatusCode()))
 		return
 	}
 
 	// check location header
 	loc, err := c.response.Location()
 	if err != nil {
-		c.addviolation("Locationヘッダがありません")
+		c.addViolation("Locationヘッダがありません")
 	} else if loc.Path == c.ctx.uri(path) {
 		// pass the check
 		return
@@ -66,5 +63,5 @@ func (c *Checker) isRedirect(path string) {
 			return
 		}
 	}
-	c.addviolation(fmt.Sprintf("リダイレクト先が %s でなければなりませんが %s でした", path, loc.Path))
+	c.addViolation(fmt.Sprintf("リダイレクト先が %s でなければなりませんが %s でした", path, loc.Path))
 }

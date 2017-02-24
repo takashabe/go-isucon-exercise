@@ -19,9 +19,11 @@ func newWorker() *Worker {
 func (w *Worker) getAndCheck(sess *Session, path, requestName string, check func(c *Checker)) {
 	req, err := http.NewRequest("GET", w.ctx.uri(path), nil)
 	if err != nil {
+		// TODO: error handling
 		return
 	}
 
+	// TODO: reuse global defined http.Client (must reuse transport)
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -30,10 +32,10 @@ func (w *Worker) getAndCheck(sess *Session, path, requestName string, check func
 	if sess != nil {
 		client.Jar = sess.cookie
 	}
-	w.requestAndCheck(req, client, requestName, check)
+	w.requestAndCheck(path, requestName, req, client, check)
 }
 
-func (w *Worker) requestAndCheck(req *http.Request, client *http.Client, requestName string, check func(c *Checker)) {
+func (w *Worker) requestAndCheck(path, requestName string, req *http.Request, client *http.Client, check func(c *Checker)) {
 	PrintDebugf("SEND REQUEST: [%s] %s", requestName, req.URL.Path)
 	res, err := client.Do(req)
 	if err != nil {
@@ -48,6 +50,7 @@ func (w *Worker) requestAndCheck(req *http.Request, client *http.Client, request
 		check(&Checker{
 			ctx:         w.ctx,
 			result:      w.result,
+			path:        path,
 			requestName: requestName,
 			response:    *res,
 		})
