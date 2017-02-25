@@ -3,7 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/url"
+)
+
+// violation text
+var (
+	causeStatusCode          = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした"
+	causeRedirectStatusCode  = "レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした"
+	causeNoneLocation        = "Locationヘッダがありません"
+	causeInvalidLocationPath = "リダイレクト先が %s でなければなりませんが %s でした"
 )
 
 type Checker struct {
@@ -14,7 +21,7 @@ type Checker struct {
 	response    http.Response
 }
 
-func (c *Checker) getStatusCode() int {
+func (c *Checker) statusCode() int {
 	return c.response.StatusCode
 }
 
@@ -27,8 +34,8 @@ func (c *Checker) hasViolation() bool {
 }
 
 func (c *Checker) isStatusCode(code int) {
-	if c.getStatusCode() != code {
-		c.addViolation(fmt.Sprintf("パス '%s' へのレスポンスコード %d が期待されていましたが %d でした", c.path, code, c.getStatusCode()))
+	if c.statusCode() != code {
+		c.addViolation(fmt.Sprintf(causeStatusCode, c.path, code, c.statusCode()))
 	}
 }
 
@@ -37,31 +44,32 @@ func (c *Checker) isRedirect(path string) {
 	wantStatusCode := []int{302, 303, 307}
 	isValidStatusCode := false
 	for _, v := range wantStatusCode {
-		if v == c.getStatusCode() {
+		if v == c.statusCode() {
 			isValidStatusCode = true
 			break
 		}
 	}
-	if isValidStatusCode {
-		c.addViolation(fmt.Sprintf("レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした", c.getStatusCode()))
+	if !isValidStatusCode {
+		c.addViolation(fmt.Sprintf(causeRedirectStatusCode, c.statusCode()))
 		return
 	}
 
 	// check location header
 	loc, err := c.response.Location()
 	if err != nil {
-		c.addViolation("Locationヘッダがありません")
-	} else if loc.Path == c.ctx.uri(path) {
-		// pass the check
+		c.addViolation(causeNoneLocation)
 		return
 	}
 
-	// check url format
-	if url, err := url.Parse(path); err == nil {
-		if url.Host == "" || url.Host == c.ctx.host && url.Path == path {
-			// pass the check
-			return
-		}
+	// check url
+	if loc.String() == c.ctx.uri(path) {
+		// OK
+		return
 	}
-	c.addViolation(fmt.Sprintf("リダイレクト先が %s でなければなりませんが %s でした", path, loc.Path))
+	// check url(other than port)
+	if loc.Host == "" || loc.Host == c.ctx.host && loc.Path == path {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeInvalidLocationPath, path, loc.Path))
 }
