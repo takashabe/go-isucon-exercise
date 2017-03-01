@@ -3,14 +3,20 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 // violation text
 var (
-	causeStatusCode          = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした"
-	causeRedirectStatusCode  = "レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした"
-	causeNoneLocation        = "Locationヘッダがありません"
-	causeInvalidLocationPath = "リダイレクト先が %s でなければなりませんが %s でした"
+	causeStatusCode           = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした"
+	causeRedirectStatusCode   = "レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした"
+	causeNoLocation           = "Locationヘッダがありません"
+	causeInvalidLocationPath  = "リダイレクト先が %s でなければなりませんが %s でした"
+	causeInvalidContentLength = "パス %s に対するレスポンスのサイズが正しくありません: %d bytes"
+	causeNoContentLength      = "リクエストパス %s に対して Content-Length がありませんでした"
+	causeNoStyleSheet         = "スタイルシートのパス %s への参照がありません"
 )
 
 type Checker struct {
@@ -57,7 +63,7 @@ func (c *Checker) isRedirect(path string) {
 	// check location header
 	loc, err := c.response.Location()
 	if err != nil {
-		c.addViolation(causeNoneLocation)
+		c.addViolation(causeNoLocation)
 		return
 	}
 
@@ -72,4 +78,32 @@ func (c *Checker) isRedirect(path string) {
 		return
 	}
 	c.addViolation(fmt.Sprintf(causeInvalidLocationPath, path, loc.Path))
+}
+
+func (c *Checker) isContentLength(size int) {
+	cl := c.response.Header.Get("Content-Length")
+	if cl == "" {
+		c.addViolation(causeNoContentLength)
+		return
+	}
+	if i, err := strconv.Atoi(cl); err != nil || i != size {
+		c.addViolation(fmt.Sprintf(causeInvalidContentLength, c.path, i))
+		return
+	}
+}
+
+func (c *Checker) hasStyleSheet(path string) {
+	doc, err := goquery.NewDocumentFromResponse(&c.response)
+	if err != nil {
+		c.addViolation(fmt.Sprintf(causeNoStyleSheet, path))
+		return
+	}
+	link := doc.Find("link")
+	if rel, ok := link.Attr("rel"); ok && rel == "stylesheet" {
+		if href, ok := link.Attr("href"); ok && href == path {
+			// OK
+			return
+		}
+	}
+	c.addViolation(fmt.Sprintf(causeNoStyleSheet, path))
 }
