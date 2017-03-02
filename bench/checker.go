@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 // violation text
 var (
+	causeInvalidResponse      = "パス %s のレスポンスが正しくありません"
 	causeStatusCode           = "パス '%s' へのレスポンスコード %d が期待されていましたが %d でした"
 	causeRedirectStatusCode   = "レスポンスコードが一時リダイレクトのもの(302, 303, 307)ではなく %d でした"
 	causeNoLocation           = "Locationヘッダがありません"
@@ -17,6 +20,15 @@ var (
 	causeInvalidContentLength = "パス %s に対するレスポンスのサイズが正しくありません: %d bytes"
 	causeNoContentLength      = "リクエストパス %s に対して Content-Length がありませんでした"
 	causeNoStyleSheet         = "スタイルシートのパス %s への参照がありません"
+	causeNoNode               = "指定のDOM要素 '%s' が見付かりません"
+	causeDifferentNodeCount   = "指定のDOM要素 '%s' が %d 回表示されるはずですが、正しくありません"
+	causeFoundNode            = "DOM要素 '%s' は存在しないはずですが、表示されています"
+	causeNoContent            = "DOM要素 '%s' で文字列 '%s' を持つものが見付かりません"
+	causeDifferentContent     = "DOM要素 '%s' に文字列 '%s' がセットされているはずですが、'%s' となっています"
+	causeFoundContent         = "DOM要素 '%s' に文字列 '%s' をもつものは表示されないはずですが、表示されています"
+	causeNoBigContent         = "入力されたはずのテキストがDOM要素 '%s' に表示されていません"
+	causeNoMatchContent       = "DOM要素 '%s' の中に、テキストが正規表現 '%s' にマッチするものが見つかりません"
+	causeDifferentAttribute   = "DOM要素 '%s' のattribute %s の内容が %s になっていません"
 )
 
 type Checker struct {
@@ -92,12 +104,21 @@ func (c *Checker) isContentLength(size int) {
 	}
 }
 
-func (c *Checker) hasStyleSheet(path string) {
+func (c *Checker) document() (*goquery.Document, error) {
 	doc, err := goquery.NewDocumentFromResponse(&c.response)
 	if err != nil {
-		c.addViolation(fmt.Sprintf(causeNoStyleSheet, path))
+		c.addViolation(fmt.Sprintf(causeInvalidResponse, c.path))
+		return nil, err
+	}
+	return doc, nil
+}
+
+func (c *Checker) hasStyleSheet(path string) {
+	doc, err := c.document()
+	if err != nil {
 		return
 	}
+
 	link := doc.Find("link")
 	if rel, ok := link.Attr("rel"); ok && rel == "stylesheet" {
 		if href, ok := link.Attr("href"); ok && href == path {
@@ -106,4 +127,175 @@ func (c *Checker) hasStyleSheet(path string) {
 		}
 	}
 	c.addViolation(fmt.Sprintf(causeNoStyleSheet, path))
+}
+
+func (c *Checker) hasNode(selector string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	if doc.Find(selector).Size() > 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeNoNode, selector))
+}
+
+func (c *Checker) nodeCount(selector string, num int) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	if doc.Find(selector).Size() == num {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeDifferentNodeCount, selector, num))
+}
+
+func (c *Checker) missingNode(selector string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	if doc.Find(selector).Size() <= 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeFoundNode, selector))
+}
+
+func (c *Checker) hasContent(selector, text string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if s.Text() != "" {
+			nodes = append(nodes, s)
+		}
+	})
+	if len(nodes) == 0 {
+		c.addViolation(fmt.Sprintf(causeNoContent, selector, text))
+		return
+	}
+	for _, s := range nodes {
+		if s.Text() == text {
+			// OK
+			return
+		}
+	}
+	c.addViolation(fmt.Sprintf(causeDifferentContent, selector, text, nodes[0].Text()))
+}
+
+func (c *Checker) missingContent(selector, text string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if s.Text() == text {
+			nodes = append(nodes, s)
+		}
+	})
+	if len(nodes) == 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeFoundContent, selector, text))
+}
+
+var trimBR = regexp.MustCompile(`(?m)<(br|BR|Br|bR) */?>`)
+
+func (c *Checker) hasBigContent(selector, text string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	text = strings.Join(strings.Split(text, "\n"), "")
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if trimBR.ReplaceAllString(s.Text(), "") == text {
+			nodes = append(nodes, s)
+			return
+		}
+	})
+	if len(nodes) > 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeNoBigContent, selector))
+}
+
+func (c *Checker) matchContent(selector, regex string) {
+	reg, err := regexp.Compile(regex)
+	if err != nil {
+		c.addViolation(fmt.Sprintf(causeNoMatchContent, selector, regex))
+		return
+	}
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if reg.MatchString(s.Text()) {
+			nodes = append(nodes, s)
+			return
+		}
+	})
+	if len(nodes) > 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeNoMatchContent, selector, regex))
+}
+
+func (c *Checker) contentFunc(selector, cause string, f func(s *goquery.Selection) bool) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if f(s) {
+			nodes = append(nodes, s)
+			return
+		}
+	})
+	if len(nodes) > 0 {
+		// OK
+		return
+	}
+	c.addViolation(cause)
+}
+
+func (c *Checker) attribute(selector, attr, text string) {
+	doc, err := c.document()
+	if err != nil {
+		return
+	}
+
+	nodes := []*goquery.Selection{}
+	doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+		if t, ok := s.Attr(attr); ok && t == text {
+			nodes = append(nodes, s)
+			return
+		}
+	})
+	if len(nodes) > 0 {
+		// OK
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeDifferentAttribute, selector, attr, text))
 }
