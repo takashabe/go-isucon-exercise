@@ -16,8 +16,6 @@ type Ctx struct {
 
 	// benchmark limitation
 	maxRunningTime int
-
-	sessions []Session
 }
 
 var defaultCtx = Ctx{

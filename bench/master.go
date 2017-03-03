@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -23,12 +24,6 @@ type UserSchema struct {
 	Password string `json:"password"`
 }
 
-// Task implement for each type of benchmark
-type Task interface {
-	Task()
-	FinishHook(r Result) Result
-}
-
 type Master struct {
 }
 
@@ -37,7 +32,19 @@ func (m *Master) start() {
 	// 1. create workers
 	// 2. run for each workers with order()
 	// 3. sum return results from worker.run
+
+	// TODO: export run class parameter. for example param.json
+	workers := IsuconWorkers()
+	for _, w := range workers {
+		for _, t := range w.tasks {
+			PrintDebugf("Run %s", reflect.TypeOf(t).Name())
+		}
+	}
+
+	// todo このあたりをテストする
 }
+
+func (m *Master) getSessions()
 
 func (m *Master) createSessions(path string) (*UserSchemas, error) {
 	data, err := ioutil.ReadFile(path)

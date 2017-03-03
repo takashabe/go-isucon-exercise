@@ -32,12 +32,12 @@ func TestInitTask(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(c.responseCode)
 		}))
-		worker := newWorker()
+		worker := NewWorker()
 		worker.ctx = helper.setAddr(ts, worker.ctx)
 		task := InitTask{
 			w: *worker,
 		}
-		task.Task()
+		task.Task(nil)
 
 		got := task.FinishHook(*worker.result)
 		if got.Valid != c.expectValid {
