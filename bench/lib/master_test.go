@@ -1,4 +1,4 @@
-package main
+package bench
 
 import (
 	"reflect"
@@ -34,7 +34,7 @@ func TestCreateSessions(t *testing.T) {
 	}
 	for i, c := range cases {
 		m := Master{}
-		got, err := m.createSessions(c.input)
+		got, err := m.loadParams(c.input)
 		if errors.Cause(err) != c.expectErr {
 			t.Errorf("#%d: want: %v, got: %v", i, c.expectErr, err)
 		}
@@ -42,4 +42,9 @@ func TestCreateSessions(t *testing.T) {
 			t.Errorf("#%d: want: %v, got: %v", i, c.expectObject, got)
 		}
 	}
+}
+
+func TestStart(t *testing.T) {
+	m := Master{}
+	m.start("testdata/param.json", "localhost", 8080, 10000)
 }

@@ -1,4 +1,4 @@
-package main
+package bench
 
 import (
 	"log"
@@ -9,31 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Worker is send requests
-// TODO: export check request functions from Worker
-type Worker struct {
-	ctx    Ctx
-	tasks  []Task
-	result *Result
-}
-
-func NewWorker() *Worker {
-	return &Worker{
-		ctx:    *newCtx(),
-		result: newResult(),
-	}
-}
-
-func (w *Worker) setRunningTime(t int) *Worker {
-	w.ctx.maxRunningTime = t
-	return w
-}
-
-func (w *Worker) setTasks(tasks ...Task) *Worker {
-	w.tasks = tasks
-	return w
-}
-
 func (w *Worker) get(sess *Session, path string) {
 	w.getAndCheck(sess, path, "", nil)
 }
@@ -41,7 +16,9 @@ func (w *Worker) get(sess *Session, path string) {
 func (w *Worker) getAndCheck(sess *Session, path, requestName string, check func(c *Checker)) {
 	req, err := http.NewRequest("GET", w.ctx.uri(path), nil)
 	if err != nil {
-		log.Println(errors.Errorf("failed to generate request: %v", err.Error()))
+		PrintDebugf("failed to generate request %v", err)
+		// error is regarded as a client error
+		w.result.addResponse(400)
 		return
 	}
 

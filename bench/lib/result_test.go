@@ -1,7 +1,6 @@
-package main
+package bench
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 )
@@ -261,7 +260,7 @@ func TestToJson(t *testing.T) {
 		}
 	]
 }`)
-	got, err := json.MarshalIndent(base, "", "\t")
+	got, err := base.json()
 	if err != nil {
 		t.Errorf("want no error, got %v", err)
 	}

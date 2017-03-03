@@ -1,4 +1,6 @@
-package main
+package bench
+
+import "encoding/json"
 
 // Result is save benchmark results
 type Result struct {
@@ -7,13 +9,6 @@ type Result struct {
 	ElapsedTime  int              `json:"elapsed_time"`
 	Response     *ResponseCounter `json:"response"`
 	Violations   []*Violation     `json:"violations"`
-}
-
-// Violation is save failed requests with cause
-type Violation struct {
-	RequestName string `json:"request_type"`
-	Cause       string `json:"description"`
-	Count       int    `json:"num"`
 }
 
 func newResult() *Result {
@@ -86,4 +81,53 @@ func (r *Result) getViolation(name, cause string) (*Violation, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (r *Result) json() ([]byte, error) {
+	return json.MarshalIndent(r, "", "\t")
+}
+
+// ResponseCounter holds results for each benchmark
+type ResponseCounter struct {
+	success     int // 2xx
+	redirect    int // 3xx
+	clientError int // 4xx
+	serverError int // 5xx
+	exception   int // failed request(for example, timeout)
+}
+
+func newResponse() *ResponseCounter {
+	return &ResponseCounter{}
+}
+
+func (r *ResponseCounter) addSuccess() *ResponseCounter {
+	r.success++
+	return r
+}
+
+func (r *ResponseCounter) addRedirect() *ResponseCounter {
+	r.redirect++
+	return r
+}
+
+func (r *ResponseCounter) addClientError() *ResponseCounter {
+	r.clientError++
+	return r
+}
+
+func (r *ResponseCounter) addServerError() *ResponseCounter {
+	r.serverError++
+	return r
+}
+
+func (r *ResponseCounter) addException() *ResponseCounter {
+	r.exception++
+	return r
+}
+
+// Violation is save failed requests with cause
+type Violation struct {
+	RequestName string `json:"request_type"`
+	Cause       string `json:"description"`
+	Count       int    `json:"num"`
 }

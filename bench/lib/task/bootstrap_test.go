@@ -1,4 +1,4 @@
-package main
+package task
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 func testSessions() []*Session {
 	m := Master{}
-	params, err := m.createSessions("testdata/param.json")
+	params, err := m.loadParams("testdata/param.json")
 	if err != nil {
 		panic(fmt.Sprintf("failed create sessions: %s", err.Error()))
 	}
