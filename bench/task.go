@@ -1,4 +1,4 @@
-package task
+package main
 
 // Task implement for each type of benchmark
 type Task interface {

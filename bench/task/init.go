@@ -1,4 +1,4 @@
-package task
+package main
 
 // InitTask is initialize
 type InitTask struct {

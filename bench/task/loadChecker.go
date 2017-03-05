@@ -1,4 +1,4 @@
-package task
+package main
 
 import (
 	"math/rand"

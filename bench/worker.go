@@ -1,4 +1,4 @@
-package bench
+package main
 
 // Worker is send requests
 // TODO: export check request functions from Worker
