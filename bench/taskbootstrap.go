@@ -11,6 +11,10 @@ type BootstrapTask struct {
 	w Worker
 }
 
+func (t *BootstrapTask) SetWorker(w Worker) {
+	t.w = w
+}
+
 func (t *BootstrapTask) FinishHook(r Result) Result {
 	r.Valid = true
 
@@ -26,22 +30,22 @@ func (t *BootstrapTask) Task(sessions []*Session) {
 	s2 := sessions[1]
 	s3 := sessions[2]
 
-	t.login2ndUser(s1)
+	t.login2ndUser(s2)
 	t.login3rdUser(s3)
 	t.loginToIndex(s1)
 	t.loginForm(s1)
 	t.login1stUser(s1)
-	t.indexAfterLoginDetail(s1)
-	t.stylesheet(s1)
-	t.indexAfterLogin(s2, "INDEX AFTER LOGIN 2ND USER")
-	t.indexAfterLogin(s3, "INDEX AFTER LOGIN 3RD USER")
-	t.postTweet(s1)
-	t.viewProfileFollowUser(s1, s3)
-	t.viewProfileNoFollowUser(s1, s2)
-	t.postFollow(s2, s1)
-	t.postTweetFromFollower(s1, s2)
-	t.existFollower(s1, s2)
-	t.logout(s1)
+	// t.indexAfterLoginDetail(s1)
+	// t.stylesheet(s1)
+	// t.indexAfterLogin(s2, "INDEX AFTER LOGIN 2ND USER")
+	// t.indexAfterLogin(s3, "INDEX AFTER LOGIN 3RD USER")
+	// t.postTweet(s1)
+	// t.viewProfileFollowUser(s1, s3)
+	// t.viewProfileNoFollowUser(s1, s2)
+	// t.postFollow(s2, s1)
+	// t.postTweetFromFollower(s1, s2)
+	// t.existFollower(s1, s2)
+	// t.logout(s1)
 }
 
 func (t *BootstrapTask) login2ndUser(s *Session) {
@@ -71,7 +75,7 @@ func (t *BootstrapTask) loginToIndex(s *Session) {
 }
 
 func (t *BootstrapTask) loginForm(s *Session) {
-	t.w.getAndCheck(s, "/", "LOGIN PAGE", func(c *Checker) {
+	t.w.getAndCheck(s, "/login", "LOGIN PAGE", func(c *Checker) {
 		c.isStatusCode(200)
 
 		c.nodeCount("form input[type=text]", 1)

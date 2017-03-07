@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"reflect"
 	"testing"
 
@@ -46,5 +47,9 @@ func TestCreateSessions(t *testing.T) {
 
 func TestStart(t *testing.T) {
 	m := Master{}
-	m.start("testdata/param.json", "localhost", 8080, 10000)
+	got, err := m.start("testdata/param.json", "localhost", 8080, 10000)
+	if err != nil {
+		t.Errorf("want no error, got %#v", err)
+	}
+	log.Println(string(got))
 }

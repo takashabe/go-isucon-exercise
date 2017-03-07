@@ -42,14 +42,15 @@ func (m *Master) start(file, host string, port, time int) ([]byte, error) {
 		w.ctx.host = host
 		w.ctx.port = port
 		for _, t := range w.tasks {
-			PrintDebugf("Run %#v", t)
+			t.SetWorker(*w)
+			PrintDebugf("Run %#v\n", t)
 			t.Task(sessions)
 			r := t.FinishHook(*w.result)
-			if !r.Valid {
-				PrintDebugf("invalid result: %#v", t)
+			result.Merge(r)
+			if !result.Valid {
+				PrintDebugf("invalid result: %#v\n", t)
 				break
 			}
-			result.Merge(r)
 		}
 	}
 

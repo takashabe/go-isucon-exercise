@@ -1,10 +1,13 @@
 package main
 
 import (
-	"lib/bench"
 	"os"
 )
 
 func main() {
-	os.Exit(bench.Run(os.Args))
+	cli := &CLI{
+		outStream: os.Stdout,
+		errStream: os.Stderr,
+	}
+	os.Exit(cli.Run(os.Args))
 }

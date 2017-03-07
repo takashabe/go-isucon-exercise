@@ -1,6 +1,9 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Result is save benchmark results
 type Result struct {
@@ -130,4 +133,8 @@ type Violation struct {
 	RequestName string `json:"request_type"`
 	Cause       string `json:"description"`
 	Count       int    `json:"num"`
+}
+
+func (v *Violation) String() string {
+	return fmt.Sprintf("RequestName: %s, Cause: %s, Count: %d", v.RequestName, v.Cause, v.Count)
 }

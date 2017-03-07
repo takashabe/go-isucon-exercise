@@ -44,6 +44,7 @@ func (w *Worker) postAndCheck(sess *Session, path string, params url.Values, req
 		log.Println(errors.Errorf("failed to generate request: %v", err.Error()))
 		return
 	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	// TODO: reuse global defined http.Client (must reuse transport)
 	client := &http.Client{

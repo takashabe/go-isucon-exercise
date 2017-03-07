@@ -9,6 +9,10 @@ type LoadCheckerTask struct {
 	w Worker
 }
 
+func (t *LoadCheckerTask) SetWorker(w Worker) {
+	t.w = w
+}
+
 func (t *LoadCheckerTask) FinishHook(r Result) Result {
 	return r
 }

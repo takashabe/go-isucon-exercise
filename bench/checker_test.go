@@ -508,3 +508,40 @@ func TestAttribute(t *testing.T) {
 		}
 	}
 }
+
+func TestMultipleCallDocument(t *testing.T) {
+	response := testBodyResponse([]byte(`
+<div id="login-form">
+  <form method="POST" action="/login">
+    <div class="col-md-4 input-group">
+      <span class="input-group-addon">E-mail</span>
+      <input class="form-control" type="text" name="email" placeholder="E-mail address" />
+    </div>
+    <div class="col-md-4 input-group">
+      <span class="input-group-addon">パスワード</span>
+      <input class="form-control" type="password" name="password" />
+    </div>
+    <div class="col-md-1 input-group">
+      <input class="btn btn-default" type="submit" name="Login" value="Login" />
+    </div>
+  </form>
+</div>`))
+	checker := testChecker()
+	checker.response = *response
+	checker.response.Request = httptest.NewRequest("GET", "/", nil)
+
+	args := []struct {
+		selector string
+		num      int
+	}{
+		{"form input[type=password]", 1},
+		{"form input[type=submit]", 1},
+		{"form input[type=text]", 1},
+	}
+	for i, a := range args {
+		checker.nodeCount(a.selector, a.num)
+		if len(checker.result.Violations) != 0 {
+			t.Errorf("#%d: want no violations, got violations %v", i, checker.result.Violations)
+		}
+	}
+}

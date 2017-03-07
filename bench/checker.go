@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -105,12 +107,18 @@ func (c *Checker) isContentLength(size int) {
 }
 
 func (c *Checker) document() (*goquery.Document, error) {
-	doc, err := goquery.NewDocumentFromResponse(&c.response)
+	d, ok := doc.get(c.requestName)
+	if ok {
+		return d, nil
+	}
+
+	d, err := goquery.NewDocumentFromResponse(&c.response)
 	if err != nil {
 		c.addViolation(fmt.Sprintf(causeInvalidResponse, c.path))
 		return nil, err
 	}
-	return doc, nil
+	doc.set(c.requestName, d)
+	return d, nil
 }
 
 func (c *Checker) hasStyleSheet(path string) {
@@ -147,6 +155,7 @@ func (c *Checker) nodeCount(selector string, num int) {
 	if err != nil {
 		return
 	}
+	log.Printf("%#v", doc)
 
 	if doc.Find(selector).Size() == num {
 		// OK
@@ -298,4 +307,25 @@ func (c *Checker) attribute(selector, attr, text string) {
 		return
 	}
 	c.addViolation(fmt.Sprintf(causeDifferentAttribute, selector, attr, text))
+}
+
+// document saves goquery.Document for each request type
+type document struct {
+	doc map[string]*goquery.Document
+	mu  sync.Mutex
+}
+
+var doc document = document{doc: make(map[string]*goquery.Document, 0)}
+
+func (d *document) get(key string) (*goquery.Document, bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	v, ok := d.doc[key]
+	return v, ok
+}
+
+func (d *document) set(key string, doc *goquery.Document) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.doc[key] = doc
 }

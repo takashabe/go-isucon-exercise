@@ -5,6 +5,10 @@ type InitTask struct {
 	w Worker
 }
 
+func (t *InitTask) SetWorker(w Worker) {
+	t.w = w
+}
+
 func (t *InitTask) Task(sessions []*Session) {
 	t.w.getAndCheck(nil, "/initialize", "INITIALIZE", func(c *Checker) {
 		c.isStatusCode(200)

@@ -9,6 +9,10 @@ type LoadTask struct {
 	w Worker
 }
 
+func (t *LoadTask) SetWorker(w Worker) {
+	t.w = w
+}
+
 func (t *LoadTask) FinishHook(r Result) Result {
 	r.Valid = true
 
