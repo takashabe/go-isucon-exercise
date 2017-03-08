@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -35,17 +36,17 @@ func (t *BootstrapTask) Task(sessions []*Session) {
 	t.loginToIndex(s1)
 	t.loginForm(s1)
 	t.login1stUser(s1)
-	// t.indexAfterLoginDetail(s1)
-	// t.stylesheet(s1)
-	// t.indexAfterLogin(s2, "INDEX AFTER LOGIN 2ND USER")
-	// t.indexAfterLogin(s3, "INDEX AFTER LOGIN 3RD USER")
-	// t.postTweet(s1)
-	// t.viewProfileFollowUser(s1, s3)
-	// t.viewProfileNoFollowUser(s1, s2)
-	// t.postFollow(s2, s1)
-	// t.postTweetFromFollower(s1, s2)
-	// t.existFollower(s1, s2)
-	// t.logout(s1)
+	t.indexAfterLoginDetail(s1)
+	t.stylesheet(s1)
+	t.indexAfterLogin(s2, "INDEX AFTER LOGIN 2ND USER")
+	t.indexAfterLogin(s3, "INDEX AFTER LOGIN 3RD USER")
+	t.postTweet(s1)
+	t.viewProfileFollowUser(s1, s3)
+	t.viewProfileNoFollowUser(s1, s2)
+	t.postFollow(s2, s1)
+	t.postTweetFromFollower(s1, s2)
+	t.existFollower(s1, s2)
+	t.logout(s1)
 }
 
 func (t *BootstrapTask) login2ndUser(s *Session) {
@@ -135,8 +136,8 @@ func (t *BootstrapTask) postTweet(s *Session) {
 func (t *BootstrapTask) viewProfileFollowUser(s, dst *Session) {
 	url := fmt.Sprintf("/user/%d", dst.param.ID)
 	t.w.getAndCheck(s, url, "PROFILE FROM FOLLOW USER", func(c *Checker) {
-		c.hasContent("dd#prof-name", s.param.Name)
-		c.hasContent("dd#prof-email", s.param.Email)
+		c.hasContent("dd#prof-name", dst.param.Name)
+		c.hasContent("dd#prof-email", dst.param.Email)
 		c.missingNode("form#follow-form")
 	})
 }
@@ -144,8 +145,8 @@ func (t *BootstrapTask) viewProfileFollowUser(s, dst *Session) {
 func (t *BootstrapTask) viewProfileNoFollowUser(s, dst *Session) {
 	url := fmt.Sprintf("/user/%d", dst.param.ID)
 	t.w.getAndCheck(s, url, "PROFILE FROM NON FOLLOW USER", func(c *Checker) {
-		c.hasContent("dd#prof-name", s.param.Name)
-		c.hasContent("dd#prof-email", s.param.Email)
+		c.hasContent("dd#prof-name", dst.param.Name)
+		c.hasContent("dd#prof-email", dst.param.Email)
 		c.hasNode("form#follow-form")
 	})
 }
@@ -158,10 +159,10 @@ func (t *BootstrapTask) postFollow(s, dst *Session) {
 	})
 
 	url = fmt.Sprintf("/user/%d", dst.param.ID)
-	t.w.getAndCheck(s, url, "SEE 2ND USER FOLLOWING PAGE AFTER FOLLOW 1ST USER", func(c *Checker) {
+	t.w.getAndCheck(s, "/following", "SEE 2ND USER FOLLOWING PAGE AFTER FOLLOW 1ST USER", func(c *Checker) {
 		c.isStatusCode(200)
 		c.contentFunc(
-			fmt.Sprintf("#following dl dd.follow-follow a[href=%s]", url),
+			fmt.Sprintf("#following dl dd.follow-follow a[href='%s']", url),
 			"フォローしたばかりのユーザが含まれていません",
 			func(se *goquery.Selection) bool {
 				text, ok := se.Attr("href")
@@ -182,7 +183,8 @@ func (t *BootstrapTask) postTweetFromFollower(s, dst *Session) {
 			"#timeline.row.panel.panel-primary div.tweet div.tweet",
 			"フォローしているユーザのツイートが含まれていません",
 			func(se *goquery.Selection) bool {
-				return se.Text() == p.Get("content")
+				text := strings.TrimSpace(se.Text())
+				return text == p.Get("content")
 			})
 	})
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -33,12 +32,32 @@ var (
 	causeDifferentAttribute   = "DOM要素 '%s' のattribute %s の内容が %s になっていません"
 )
 
+// document saves goquery.Document for each request type
+type document struct {
+	doc map[string]*goquery.Document
+	mu  sync.Mutex
+}
+
+func (d *document) get(key string) (*goquery.Document, bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	v, ok := d.doc[key]
+	return v, ok
+}
+
+func (d *document) set(key string, doc *goquery.Document) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.doc[key] = doc
+}
+
 type Checker struct {
 	ctx         Ctx
 	result      *Result
 	path        string
 	requestName string
 	response    http.Response
+	document    document
 }
 
 func (c *Checker) statusCode() int {
@@ -106,10 +125,13 @@ func (c *Checker) isContentLength(size int) {
 	}
 }
 
-func (c *Checker) document() (*goquery.Document, error) {
-	d, ok := doc.get(c.requestName)
-	if ok {
-		return d, nil
+func (c *Checker) getDocument() (*goquery.Document, error) {
+	if c.document.doc == nil {
+		c.document.doc = make(map[string]*goquery.Document)
+	} else {
+		if d, ok := c.document.get(c.requestName); ok {
+			return d, nil
+		}
 	}
 
 	d, err := goquery.NewDocumentFromResponse(&c.response)
@@ -117,12 +139,12 @@ func (c *Checker) document() (*goquery.Document, error) {
 		c.addViolation(fmt.Sprintf(causeInvalidResponse, c.path))
 		return nil, err
 	}
-	doc.set(c.requestName, d)
+	c.document.set(c.requestName, d)
 	return d, nil
 }
 
 func (c *Checker) hasStyleSheet(path string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -138,7 +160,7 @@ func (c *Checker) hasStyleSheet(path string) {
 }
 
 func (c *Checker) hasNode(selector string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -151,11 +173,10 @@ func (c *Checker) hasNode(selector string) {
 }
 
 func (c *Checker) nodeCount(selector string, num int) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
-	log.Printf("%#v", doc)
 
 	if doc.Find(selector).Size() == num {
 		// OK
@@ -165,7 +186,7 @@ func (c *Checker) nodeCount(selector string, num int) {
 }
 
 func (c *Checker) missingNode(selector string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -178,7 +199,7 @@ func (c *Checker) missingNode(selector string) {
 }
 
 func (c *Checker) hasContent(selector, text string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -203,7 +224,7 @@ func (c *Checker) hasContent(selector, text string) {
 }
 
 func (c *Checker) missingContent(selector, text string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -224,7 +245,7 @@ func (c *Checker) missingContent(selector, text string) {
 var trimBR = regexp.MustCompile(`(?m)<(br|BR|Br|bR) */?>`)
 
 func (c *Checker) hasBigContent(selector, text string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -250,7 +271,7 @@ func (c *Checker) matchContent(selector, regex string) {
 		c.addViolation(fmt.Sprintf(causeNoMatchContent, selector, regex))
 		return
 	}
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -270,7 +291,7 @@ func (c *Checker) matchContent(selector, regex string) {
 }
 
 func (c *Checker) contentFunc(selector, cause string, f func(s *goquery.Selection) bool) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -290,7 +311,7 @@ func (c *Checker) contentFunc(selector, cause string, f func(s *goquery.Selectio
 }
 
 func (c *Checker) attribute(selector, attr, text string) {
-	doc, err := c.document()
+	doc, err := c.getDocument()
 	if err != nil {
 		return
 	}
@@ -307,25 +328,4 @@ func (c *Checker) attribute(selector, attr, text string) {
 		return
 	}
 	c.addViolation(fmt.Sprintf(causeDifferentAttribute, selector, attr, text))
-}
-
-// document saves goquery.Document for each request type
-type document struct {
-	doc map[string]*goquery.Document
-	mu  sync.Mutex
-}
-
-var doc document = document{doc: make(map[string]*goquery.Document, 0)}
-
-func (d *document) get(key string) (*goquery.Document, bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	v, ok := d.doc[key]
-	return v, ok
-}
-
-func (d *document) set(key string, doc *goquery.Document) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.doc[key] = doc
 }
