@@ -39,7 +39,7 @@ func TestInitTask(t *testing.T) {
 		}
 		task.Task(nil)
 
-		got := task.FinishHook(*worker.result)
+		got := task.FinishHook()
 		if got.Valid != c.expectValid {
 			t.Errorf("#%d: want: %v, got: %v", i, c.expectValid, got.Valid)
 		}

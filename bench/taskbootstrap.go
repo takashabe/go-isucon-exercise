@@ -16,13 +16,15 @@ func (t *BootstrapTask) SetWorker(w Worker) {
 	t.w = w
 }
 
-func (t *BootstrapTask) FinishHook(r Result) Result {
-	r.Valid = true
+func (t *BootstrapTask) GetWorker() Worker {
+	return t.w
+}
 
-	if len(r.Violations) > 0 {
-		r.Valid = false
+func (t *BootstrapTask) FinishHook() Result {
+	if len(t.w.result.Violations) > 0 {
+		t.w.result.Valid = false
 	}
-	return r
+	return *t.w.result
 }
 
 func (t *BootstrapTask) Task(sessions []*Session) {

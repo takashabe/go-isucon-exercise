@@ -9,8 +9,9 @@ import (
 // Task implement for each type of benchmark
 type Task interface {
 	SetWorker(w Worker)
+	GetWorker() Worker
 	Task(sessions []*Session)
-	FinishHook(r Result) Result
+	FinishHook() Result
 }
 
 // Task utilities
@@ -38,10 +39,9 @@ func IsuconWorkers() []*Worker {
 	loadChecker := &LoadCheckerTask{}
 
 	ws := []*Worker{
-		NewWorker(),
 		NewWorker().setRunningTime(30000).setTasks(init),
 		NewWorker().setRunningTime(30000).setTasks(bootstrap),
-		NewWorker().setRunningTime(60000).setTasks(load, load, loadChecker),
+		NewWorker().setRunningTime(60000).setTasks(load, load, load, loadChecker),
 	}
 	return ws
 }

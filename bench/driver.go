@@ -59,10 +59,9 @@ func (w *Worker) postAndCheck(sess *Session, path string, params url.Values, req
 }
 
 func (w *Worker) requestAndCheck(path, requestName string, req *http.Request, client *http.Client, check func(c *Checker)) {
-	PrintDebugf("SEND REQUEST: [%s] %s", requestName, req.URL.Path)
 	res, err := client.Do(req)
 	if err != nil {
-		PrintDebugf("failed to send request %v", err)
+		PrintDebugf("failed to send request. path=%s, error=%v", path, err)
 		// error is regarded as a server error
 		w.result.addResponse(500)
 		return

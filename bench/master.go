@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -32,7 +33,7 @@ func (m *Master) start(file, host string, port, time int) ([]byte, error) {
 	// 3. sum return results from worker.run
 
 	// TODO: export run class parameter. for example param.json
-	_, err := m.getSessions(file)
+	session, err := m.getSessions(file)
 	if err != nil {
 		return nil, err
 	}
@@ -42,11 +43,11 @@ func (m *Master) start(file, host string, port, time int) ([]byte, error) {
 		w.ctx.host = host
 		w.ctx.port = port
 		for _, t := range w.tasks {
+			PrintDebugf("RUN %s", reflect.ValueOf(t).String())
 			t.SetWorker(*w)
-			PrintDebugf("Run %#v\n", t)
-			t.Task(sessions)
-			r := t.FinishHook(*w.result)
-			result.Merge(r)
+			t.Task(session)
+			r := t.FinishHook()
+			result = result.Merge(r)
 			if !result.Valid {
 				PrintDebugf("invalid result: %#v\n", t)
 				break

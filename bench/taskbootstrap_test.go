@@ -42,7 +42,7 @@ func TestTask(t *testing.T) {
 	task.Task(testSessions())
 
 	want := false
-	got := task.FinishHook(*w.result)
+	got := task.FinishHook()
 	if got.Valid != want {
 		t.Errorf("want: %d, got: %d", want, got.Valid)
 	}
