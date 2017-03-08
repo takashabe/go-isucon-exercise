@@ -16,6 +16,7 @@ type Result struct {
 
 func newResult() *Result {
 	return &Result{
+		Valid:      true,
 		Response:   newResponse(),
 		Violations: make([]*Violation, 0),
 	}
@@ -26,11 +27,11 @@ func (r *Result) Merge(dst Result) *Result {
 	r.RequestCount += dst.RequestCount
 	r.ElapsedTime += dst.ElapsedTime
 
-	r.Response.success += dst.Response.success
-	r.Response.redirect += dst.Response.redirect
-	r.Response.clientError += dst.Response.clientError
-	r.Response.serverError += dst.Response.serverError
-	r.Response.exception += dst.Response.exception
+	r.Response.Success += dst.Response.Success
+	r.Response.Redirect += dst.Response.Redirect
+	r.Response.ClientError += dst.Response.ClientError
+	r.Response.ServerError += dst.Response.ServerError
+	r.Response.Exception += dst.Response.Exception
 
 	for _, dv := range dst.Violations {
 		if rv, ok := r.getViolation(dv.RequestName, dv.Cause); ok {
@@ -92,11 +93,11 @@ func (r *Result) json() ([]byte, error) {
 
 // ResponseCounter holds results for each benchmark
 type ResponseCounter struct {
-	success     int // 2xx
-	redirect    int // 3xx
-	clientError int // 4xx
-	serverError int // 5xx
-	exception   int // failed request(for example, timeout)
+	Success     int `json:"success"`      // 2xx
+	Redirect    int `json:"redirect"`     // 3xx
+	ClientError int `json:"client_error"` // 4xx
+	ServerError int `json:"server_error"` // 5xx
+	Exception   int `json:"exception"`    // failed request(for example, timeout)
 }
 
 func newResponse() *ResponseCounter {
@@ -104,27 +105,27 @@ func newResponse() *ResponseCounter {
 }
 
 func (r *ResponseCounter) addSuccess() *ResponseCounter {
-	r.success++
+	r.Success++
 	return r
 }
 
 func (r *ResponseCounter) addRedirect() *ResponseCounter {
-	r.redirect++
+	r.Redirect++
 	return r
 }
 
 func (r *ResponseCounter) addClientError() *ResponseCounter {
-	r.clientError++
+	r.ClientError++
 	return r
 }
 
 func (r *ResponseCounter) addServerError() *ResponseCounter {
-	r.serverError++
+	r.ServerError++
 	return r
 }
 
 func (r *ResponseCounter) addException() *ResponseCounter {
-	r.exception++
+	r.Exception++
 	return r
 }
 

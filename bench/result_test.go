@@ -13,40 +13,45 @@ func TestAddResponse(t *testing.T) {
 		{
 			202,
 			&Result{
+				Valid:        true,
 				RequestCount: 1,
-				Response:     &ResponseCounter{success: 1},
+				Response:     &ResponseCounter{Success: 1},
 				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			302,
 			&Result{
+				Valid:        true,
 				RequestCount: 1,
-				Response:     &ResponseCounter{redirect: 1},
+				Response:     &ResponseCounter{Redirect: 1},
 				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			404,
 			&Result{
+				Valid:        true,
 				RequestCount: 1,
-				Response:     &ResponseCounter{clientError: 1},
+				Response:     &ResponseCounter{ClientError: 1},
 				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			999,
 			&Result{
+				Valid:        true,
 				RequestCount: 1,
-				Response:     &ResponseCounter{serverError: 1},
+				Response:     &ResponseCounter{ServerError: 1},
 				Violations:   make([]*Violation, 0),
 			},
 		},
 		{
 			0,
 			&Result{
+				Valid:        true,
 				RequestCount: 1,
-				Response:     &ResponseCounter{serverError: 1},
+				Response:     &ResponseCounter{ServerError: 1},
 				Violations:   make([]*Violation, 0),
 			},
 		},
@@ -67,11 +72,11 @@ func TestAddResponseException(t *testing.T) {
 		{
 			&Result{
 				RequestCount: 1,
-				Response:     &ResponseCounter{success: 200},
+				Response:     &ResponseCounter{Success: 200},
 			},
 			&Result{
 				RequestCount: 2,
-				Response:     &ResponseCounter{success: 200, exception: 1},
+				Response:     &ResponseCounter{Success: 200, Exception: 1},
 			},
 		},
 	}
@@ -154,7 +159,7 @@ func TestMerge(t *testing.T) {
 				Valid:        false,
 				RequestCount: 1,
 				ElapsedTime:  300,
-				Response:     &ResponseCounter{success: 1, exception: 1},
+				Response:     &ResponseCounter{Success: 1, Exception: 1},
 				Violations: []*Violation{
 					&Violation{
 						RequestName: "foo",
@@ -167,7 +172,7 @@ func TestMerge(t *testing.T) {
 				Valid:        true,
 				RequestCount: 1,
 				ElapsedTime:  300,
-				Response:     &ResponseCounter{success: 1},
+				Response:     &ResponseCounter{Success: 1},
 				Violations: []*Violation{
 					&Violation{
 						RequestName: "foo",
@@ -185,7 +190,7 @@ func TestMerge(t *testing.T) {
 				Valid:        false,
 				RequestCount: 2,
 				ElapsedTime:  600,
-				Response:     &ResponseCounter{success: 2, exception: 1},
+				Response:     &ResponseCounter{Success: 2, Exception: 1},
 				Violations: []*Violation{
 					&Violation{
 						RequestName: "foo",
@@ -202,13 +207,13 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			&Result{
-				Response: &ResponseCounter{success: 1},
+				Response: &ResponseCounter{Success: 1},
 			},
 			Result{
 				Response: newResponse(),
 			},
 			&Result{
-				Response: &ResponseCounter{success: 1},
+				Response: &ResponseCounter{Success: 1},
 			},
 		},
 	}
@@ -226,8 +231,8 @@ func TestToJson(t *testing.T) {
 		RequestCount: 10,
 		ElapsedTime:  300,
 		Response: &ResponseCounter{
-			success:   5,
-			exception: 5,
+			Success:   5,
+			Exception: 5,
 		},
 		Violations: []*Violation{
 			&Violation{
@@ -246,7 +251,13 @@ func TestToJson(t *testing.T) {
 	"valid": true,
 	"request_count": 10,
 	"elapsed_time": 300,
-	"response": {},
+	"response": {
+		"success": 5,
+		"redirect": 0,
+		"client_error": 0,
+		"server_error": 0,
+		"exception": 5
+	},
 	"violations": [
 		{
 			"request_type": "a",
