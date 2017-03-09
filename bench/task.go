@@ -32,16 +32,17 @@ func (t *taskUtil) makeTweetParam() url.Values {
 	return p
 }
 
-func IsuconWorkers() []*Worker {
-	init := &InitTask{}
-	bootstrap := &BootstrapTask{}
+func IsuconWorkers(d Driver) []*Worker {
+	// init := &InitTask{}
+	// bootstrap := &BootstrapTask{}
+	// loadChecker := &LoadCheckerTask{}
 	load := &LoadTask{}
-	loadChecker := &LoadCheckerTask{}
 
 	ws := []*Worker{
-		NewWorker().setRunningTime(30000).setTasks(init),
-		NewWorker().setRunningTime(30000).setTasks(bootstrap),
-		NewWorker().setRunningTime(60000).setTasks(load, load, load, loadChecker),
+		// NewWorker().setRunningTime(30000).setTasks(init),
+		// NewWorker().setRunningTime(30000).setTasks(bootstrap),
+		NewWorker().setRunningTime(60000).setTasks(load),
+		NewWorker().setRunningTime(60000).setTasks(load, load, load, load),
 	}
 	return ws
 }

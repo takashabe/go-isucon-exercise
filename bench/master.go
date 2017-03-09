@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"reflect"
 
 	"github.com/pkg/errors"
 )
@@ -42,16 +41,10 @@ func (m *Master) start(file, host string, port, time int) ([]byte, error) {
 	for _, w := range workers {
 		w.ctx.host = host
 		w.ctx.port = port
-		for _, t := range w.tasks {
-			PrintDebugf("RUN %s", reflect.ValueOf(t).String())
-			t.SetWorker(*w)
-			t.Task(session)
-			r := t.FinishHook()
-			result = result.Merge(r)
-			if !result.Valid {
-				PrintDebugf("invalid result: %#v\n", t)
-				break
-			}
+		r := w.run(session)
+		result.Merge(*r)
+		if !result.Valid {
+			break
 		}
 	}
 

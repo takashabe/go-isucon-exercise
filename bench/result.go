@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 // Result is save benchmark results
@@ -12,6 +13,7 @@ type Result struct {
 	ElapsedTime  int              `json:"elapsed_time"`
 	Response     *ResponseCounter `json:"response"`
 	Violations   []*Violation     `json:"violations"`
+	mu           sync.Mutex       `json:"-"`
 }
 
 func newResult() *Result {
@@ -23,6 +25,9 @@ func newResult() *Result {
 }
 
 func (r *Result) Merge(dst Result) *Result {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.Valid = r.Valid && dst.Valid
 	r.RequestCount += dst.RequestCount
 	r.ElapsedTime += dst.ElapsedTime
@@ -45,6 +50,9 @@ func (r *Result) Merge(dst Result) *Result {
 }
 
 func (r *Result) addResponse(code int) *Result {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.RequestCount++
 	if 200 <= code && code < 300 {
 		r.Response.addSuccess()
@@ -59,12 +67,18 @@ func (r *Result) addResponse(code int) *Result {
 }
 
 func (r *Result) addResponseException() *Result {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.RequestCount++
 	r.Response.addException()
 	return r
 }
 
 func (r *Result) addViolation(name, cause string) *Result {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if v, ok := r.getViolation(name, cause); ok {
 		v.Count++
 		return r
@@ -93,11 +107,12 @@ func (r *Result) json() ([]byte, error) {
 
 // ResponseCounter holds results for each benchmark
 type ResponseCounter struct {
-	Success     int `json:"success"`      // 2xx
-	Redirect    int `json:"redirect"`     // 3xx
-	ClientError int `json:"client_error"` // 4xx
-	ServerError int `json:"server_error"` // 5xx
-	Exception   int `json:"exception"`    // failed request(for example, timeout)
+	Success     int        `json:"success"`      // 2xx
+	Redirect    int        `json:"redirect"`     // 3xx
+	ClientError int        `json:"client_error"` // 4xx
+	ServerError int        `json:"server_error"` // 5xx
+	Exception   int        `json:"exception"`    // failed request(for example, timeout)
+	mu          sync.Mutex `json:"-"`
 }
 
 func newResponse() *ResponseCounter {
@@ -105,26 +120,36 @@ func newResponse() *ResponseCounter {
 }
 
 func (r *ResponseCounter) addSuccess() *ResponseCounter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.Success++
 	return r
 }
 
 func (r *ResponseCounter) addRedirect() *ResponseCounter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.Redirect++
 	return r
 }
 
 func (r *ResponseCounter) addClientError() *ResponseCounter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.ClientError++
 	return r
 }
 
 func (r *ResponseCounter) addServerError() *ResponseCounter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.ServerError++
 	return r
 }
 
 func (r *ResponseCounter) addException() *ResponseCounter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.Exception++
 	return r
 }

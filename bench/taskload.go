@@ -18,14 +18,15 @@ func (t *LoadTask) GetWorker() Worker {
 }
 
 func (t *LoadTask) FinishHook() Result {
-	if len(t.w.result.Violations) > 0 {
-		t.w.result.Valid = false
+	result := t.w.getResult()
+	if len(result.Violations) > 0 {
+		result.Valid = false
 	}
-	return *t.w.result
+	return *result
 }
 
 func (t *LoadTask) Task(sessions []*Session) {
-	timeout := time.After(100 * time.Millisecond)
+	timeout := time.After(1000 * time.Millisecond)
 	// TODO: more interrupt timeout in run(). for each send request
 	for {
 		select {
