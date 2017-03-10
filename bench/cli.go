@@ -13,7 +13,7 @@ const (
 	defaultHost = "localhost"
 	defaultPort = 80
 	defaultTime = 3 * 60 * 1000
-	defaultFile = "data/param.json"
+	defaultFile = "testdata/param.json"
 )
 
 // Exit codes. used only in Run()

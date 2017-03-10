@@ -8,10 +8,8 @@ import (
 
 // Task implement for each type of benchmark
 type Task interface {
-	SetWorker(w Worker)
-	GetWorker() Worker
-	Task(sessions []*Session)
-	FinishHook() Result
+	Task(ctx Ctx, driver *Driver) *Driver
+	FinishHook(result Result) Result
 }
 
 // Task utilities
@@ -32,17 +30,17 @@ func (t *taskUtil) makeTweetParam() url.Values {
 	return p
 }
 
-func IsuconWorkers(d Driver) []*Worker {
-	// init := &InitTask{}
-	// bootstrap := &BootstrapTask{}
-	// loadChecker := &LoadCheckerTask{}
+// Specific workers
+func IsuconWorkOrder() []*WorkOrder {
+	init := &InitTask{}
+	bootstrap := &BootstrapTask{}
+	loadChecker := &LoadCheckerTask{}
 	load := &LoadTask{}
 
-	ws := []*Worker{
-		// NewWorker().setRunningTime(30000).setTasks(init),
-		// NewWorker().setRunningTime(30000).setTasks(bootstrap),
-		NewWorker().setRunningTime(60000).setTasks(load),
-		NewWorker().setRunningTime(60000).setTasks(load, load, load, load),
+	order := []*WorkOrder{
+		{30000, []Task{init}},
+		{30000, []Task{bootstrap}},
+		{1000, []Task{load, load, load, load, load, loadChecker}},
 	}
-	return ws
+	return order
 }

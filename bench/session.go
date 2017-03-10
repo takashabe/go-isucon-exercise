@@ -11,13 +11,13 @@ type Session struct {
 	param  UserSchema
 }
 
-func newSession(p UserSchema) *Session {
+func newSession(p UserSchema) (*Session, error) {
 	c, err := cookiejar.New(nil)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	return &Session{
 		cookie: c,
 		param:  p,
-	}
+	}, nil
 }

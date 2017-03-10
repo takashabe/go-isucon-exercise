@@ -5,50 +5,40 @@ import (
 	"time"
 )
 
-type LoadTask struct {
-	w Worker
-}
+type LoadTask struct{}
 
-func (t *LoadTask) SetWorker(w Worker) {
-	t.w = w
-}
-
-func (t *LoadTask) GetWorker() Worker {
-	return t.w
-}
-
-func (t *LoadTask) FinishHook() Result {
-	result := t.w.getResult()
-	if len(result.Violations) > 0 {
-		result.Valid = false
+func (t *LoadTask) FinishHook(r Result) Result {
+	if len(r.Violations) > 0 {
+		r.Fail()
 	}
-	return *result
+	return r
 }
 
-func (t *LoadTask) Task(sessions []*Session) {
+func (t *LoadTask) Task(ctx Ctx, d *Driver) *Driver {
+	// runningTime := ctx.workerRunningTime
 	timeout := time.After(1000 * time.Millisecond)
 	// TODO: more interrupt timeout in run(). for each send request
 	for {
 		select {
 		case <-timeout:
-			return
+			return d
 		default:
-			t.run(sessions)
+			t.run(ctx, d)
 		}
 	}
 }
 
-func (t *LoadTask) run(sessions []*Session) {
+func (t *LoadTask) run(ctx Ctx, d *Driver) {
 	// LoadTask use 10...
 	rand.Seed(time.Now().UnixNano())
-	sub := sessions[10:]
+	sub := ctx.sessions[10:]
 	s1 := sub[rand.Intn(len(sub))]
 	// s2 := sub[rand.Intn(len(sub))]
 	// s3 := sub[rand.Intn(len(sub))]
 
-	t.w.get(s1, "/logout")
-	t.w.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
-	t.w.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
+	d.get(s1, "/logout")
+	d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
+	d.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
 		c.isRedirect("/")
 	})
 }

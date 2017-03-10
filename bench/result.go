@@ -24,6 +24,10 @@ func newResult() *Result {
 	}
 }
 
+func (r *Result) Fail() {
+	r.Valid = false
+}
+
 func (r *Result) Merge(dst Result) *Result {
 	r.mu.Lock()
 	defer r.mu.Unlock()

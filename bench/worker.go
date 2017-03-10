@@ -1,58 +1,40 @@
 package main
 
-import (
-	"sync"
-
-	"github.com/k0kubun/pp"
-)
+import "sync"
 
 // Worker is send requests
 // TODO: export check request functions from Worker
 type Worker struct {
-	ctx    Ctx
-	tasks  []Task
-	result *Result
-	mu     sync.Mutex
+	ctx   Ctx
+	tasks []Task
+	mu    sync.Mutex
 }
 
-func NewWorker() *Worker {
+func NewWorker(ctx Ctx, time int, tasks []Task) *Worker {
+	ctx.workerRunningTime = time
 	return &Worker{
-		ctx:    *newCtx(),
-		result: newResult(),
+		ctx:   ctx,
+		tasks: tasks,
 	}
 }
 
-func (w *Worker) setRunningTime(t int) *Worker {
-	w.ctx.maxRunningTime = t
-	return w
-}
-
-func (w *Worker) setTasks(tasks ...Task) *Worker {
-	w.tasks = tasks
-	return w
-}
-
-func (w *Worker) getResult() *Result {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.result
-}
-
-func (w *Worker) run(sessions []*Session) *Result {
-	result := newResult()
-	dones := make(chan struct{}, len(w.tasks))
+func (w *Worker) run() *Result {
+	allResult := newResult()
+	dones := make(chan Result, len(w.tasks))
 	for _, t := range w.tasks {
 		go func() {
-			t.SetWorker(*w)
-			t.Task(sessions)
-			r := t.FinishHook()
-			pp.Println(r)
-			result.Merge(r)
-			dones <- struct{}{}
+			driver := &Driver{
+				result: newResult(),
+				ctx:    w.ctx,
+			}
+			t.Task(w.ctx, driver)
+			r := t.FinishHook(*driver.result)
+			dones <- r
 		}()
 	}
 	for i := 0; i < len(w.tasks); i++ {
-		<-dones
+		r := <-dones
+		allResult.Merge(r)
 	}
-	return result
+	return allResult
 }

@@ -3,21 +3,8 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 )
-
-type Helper struct{}
-
-var helper = Helper{}
-
-func (h *Helper) setAddr(ts *httptest.Server, ctx Ctx) Ctx {
-	addr := strings.Split(ts.Listener.Addr().String(), ":")
-	ctx.host = addr[0]
-	ctx.port, _ = strconv.Atoi(addr[1])
-	return ctx
-}
 
 func TestInitTask(t *testing.T) {
 	cases := []struct {
@@ -32,14 +19,12 @@ func TestInitTask(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(c.responseCode)
 		}))
-		worker := NewWorker()
-		worker.ctx = helper.setAddr(ts, worker.ctx)
-		task := InitTask{
-			w: *worker,
-		}
-		task.Task(nil)
+		ctx := helper.testCtx(ts)
+		driver := helper.testDriver(ctx)
 
-		got := task.FinishHook()
+		task := &InitTask{}
+		task.Task(ctx, driver)
+		got := task.FinishHook(*driver.result)
 		if got.Valid != c.expectValid {
 			t.Errorf("#%d: want: %v, got: %v", i, c.expectValid, got.Valid)
 		}

@@ -1,27 +1,19 @@
 package main
 
 // InitTask is initialize
-type InitTask struct {
-	w Worker
-}
+type InitTask struct{}
 
-func (t *InitTask) SetWorker(w Worker) {
-	t.w = w
-}
-
-func (t *InitTask) GetWorker() Worker {
-	return t.w
-}
-
-func (t *InitTask) FinishHook() Result {
-	if len(t.w.result.Violations) > 0 {
-		t.w.result.Valid = false
+func (t *InitTask) FinishHook(r Result) Result {
+	if len(r.Violations) > 0 {
+		r.Fail()
 	}
-	return *t.w.result
+	return r
 }
 
-func (t *InitTask) Task(sessions []*Session) {
-	t.w.getAndCheck(nil, "/initialize", "INITIALIZE", func(c *Checker) {
+func (t *InitTask) Task(ctx Ctx, d *Driver) *Driver {
+	d.getAndCheck(nil, "/initialize", "INITIALIZE", func(c *Checker) {
 		c.isStatusCode(200)
 	})
+
+	return d
 }
