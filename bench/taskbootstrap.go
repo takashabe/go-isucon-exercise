@@ -179,7 +179,7 @@ func (t *BootstrapTask) postTweetFromFollower(s, dst *Session) {
 	t.d.getAndCheck(dst, "/", "SEE 2ND USER TIMELINE AFTER TWEET 1ST USER", func(c *Checker) {
 		c.isStatusCode(200)
 		c.contentFunc(
-			"#timeline.rod.panel.panel-primary div.tweet div.tweet",
+			"#timeline.row.panel.panel-primary div.tweet div.tweet",
 			"フォローしているユーザのツイートが含まれていません",
 			func(se *goquery.Selection) bool {
 				text := strings.TrimSpace(se.Text())
@@ -192,7 +192,7 @@ func (t *BootstrapTask) existFollower(s, dst *Session) {
 	t.d.getAndCheck(s, "/followers", "SEE 1ST USER FOLLOWERS PAGE AFTER FOLLOW FROM 2ND USER", func(c *Checker) {
 		c.isStatusCode(200)
 		c.contentFunc(
-			"#followers.rod.panel.panel-primary dl dd.follow-follow",
+			"#followers.row.panel.panel-primary dl dd.follow-follow",
 			"フォローされているユーザが含まれていません",
 			func(se *goquery.Selection) bool {
 				return se.Text() == s.param.Name
