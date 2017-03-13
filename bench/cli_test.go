@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"bytes"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,8 +11,8 @@ import (
 
 func TestParseArgs(t *testing.T) {
 	cli := &CLI{
-		outStream: os.Stdout,
-		errStream: os.Stderr,
+		outStream: new(bytes.Buffer),
+		errStream: new(bytes.Buffer),
 	}
 	cases := []struct {
 		input       string
