@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-type LoadTask struct{}
+type LoadTask struct {
+	timeout time.Time
+}
 
 func (t *LoadTask) FinishHook(r Result) Result {
 	if len(r.Violations) > 0 {
@@ -15,30 +17,37 @@ func (t *LoadTask) FinishHook(r Result) Result {
 }
 
 func (t *LoadTask) Task(ctx Ctx, d *Driver) *Driver {
-	// runningTime := ctx.workerRunningTime
-	timeout := time.After(1000 * time.Millisecond)
-	// TODO: more interrupt timeout in run(). for each send request
+	runningTime := ctx.workerRunningTime
+	t.timeout = time.Now().Add(time.Millisecond * time.Duration(runningTime))
 	for {
-		select {
-		case <-timeout:
+		if t.isTimeout() {
 			return d
-		default:
-			t.run(ctx, d)
 		}
+		t.run(ctx, d)
 	}
+}
+
+func (t *LoadTask) isTimeout() bool {
+	return t.timeout.Before(time.Now())
 }
 
 func (t *LoadTask) run(ctx Ctx, d *Driver) {
 	// LoadTask use 10...
 	rand.Seed(time.Now().UnixNano())
 	sub := ctx.sessions[10:]
-	s1 := sub[rand.Intn(len(sub))]
+	// s1 := sub[rand.Intn(len(sub))]
+	s1 := sub[0]
 	// s2 := sub[rand.Intn(len(sub))]
 	// s3 := sub[rand.Intn(len(sub))]
 
-	d.get(s1, "/logout")
-	d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
-	d.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
-		c.isRedirect("/")
+	s1.lockFunc(func() {
+		d.get(s1, "/logout")
+		d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
+		d.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
+			c.isRedirect("/")
+		})
 	})
+	if t.isTimeout() {
+		return
+	}
 }

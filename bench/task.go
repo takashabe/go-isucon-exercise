@@ -33,14 +33,14 @@ func (t *taskUtil) makeTweetParam() url.Values {
 // Specific workers
 func IsuconWorkOrder() []*WorkOrder {
 	init := &InitTask{}
-	bootstrap := &BootstrapTask{}
+	// bootstrap := &BootstrapTask{}
 	loadChecker := &LoadCheckerTask{}
 	load := &LoadTask{}
 
 	order := []*WorkOrder{
 		{30000, []Task{init}},
 		{30000, []Task{bootstrap}},
-		{1000, []Task{load, load, load, load, load, loadChecker}},
+		{10000, []Task{load, load, load, load, load, load, load, load, load, load, loadChecker}},
 	}
 	return order
 }

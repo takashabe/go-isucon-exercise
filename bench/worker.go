@@ -1,6 +1,10 @@
 package main
 
-import "sync"
+import (
+	"fmt"
+	"reflect"
+	"sync"
+)
 
 // Worker is send requests
 // TODO: export check request functions from Worker
@@ -37,4 +41,13 @@ func (w *Worker) run() *Result {
 		allResult.Merge(r)
 	}
 	return allResult
+}
+
+func (w *Worker) String() string {
+	s := ""
+	s = fmt.Sprintf("Runningtime: %d:\n", w.ctx.workerRunningTime)
+	for _, t := range w.tasks {
+		s = s + fmt.Sprintf("\t%s", reflect.TypeOf(t).Elem().Name())
+	}
+	return s
 }

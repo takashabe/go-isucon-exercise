@@ -43,6 +43,7 @@ func (m *Master) start() ([]byte, error) {
 	orders := IsuconWorkOrder()
 	for _, o := range orders {
 		w := NewWorker(m.ctx, o.runningTime, o.tasks)
+		PrintDebugf("RUN worker: %v\n", w)
 		result.Merge(*w.run())
 		if !result.Valid {
 			break
