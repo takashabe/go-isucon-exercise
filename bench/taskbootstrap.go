@@ -23,7 +23,9 @@ func (t *BootstrapTask) Task(ctx Ctx, d *Driver) *Driver {
 	t.d = d
 	sessions := ctx.sessions
 
-	// BootstrapTask use 0..2
+	// 0..2 Bootstrap
+	// 3..9 LoadChecker
+	// 10.. Load
 	s1 := sessions[0]
 	s2 := sessions[1]
 	s3 := sessions[2]

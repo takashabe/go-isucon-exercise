@@ -34,11 +34,6 @@ func NewMaster(host string, port int, file string, agent string) (*Master, error
 }
 
 func (m *Master) start() ([]byte, error) {
-	// TODO
-	// 1. create workers
-	// 2. run for each workers with order()
-	// 3. sum return results from worker.run
-
 	result := newResult()
 	orders := IsuconWorkOrder()
 	for _, o := range orders {

@@ -32,7 +32,9 @@ func (t *LoadTask) isTimeout() bool {
 }
 
 func (t *LoadTask) run(ctx Ctx, d *Driver) {
-	// LoadTask use 10...
+	// 0..2 Bootstrap
+	// 3..9 LoadChecker
+	// 10.. Load
 	rand.Seed(time.Now().UnixNano())
 	sub := ctx.sessions[10:]
 	// s1 := sub[rand.Intn(len(sub))]

@@ -7,7 +7,6 @@ import (
 )
 
 // Worker is send requests
-// TODO: export check request functions from Worker
 type Worker struct {
 	ctx   Ctx
 	tasks []Task
@@ -44,8 +43,7 @@ func (w *Worker) run() *Result {
 }
 
 func (w *Worker) String() string {
-	s := ""
-	s = fmt.Sprintf("Runningtime: %d:\n", w.ctx.workerRunningTime)
+	s := fmt.Sprintf("Runningtime: %d:\n", w.ctx.workerRunningTime)
 	for _, t := range w.tasks {
 		s = s + fmt.Sprintf("\t%s", reflect.TypeOf(t).Elem().Name())
 	}
