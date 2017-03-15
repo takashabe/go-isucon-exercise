@@ -28,8 +28,7 @@ vendor/
 .idea/
 
 # binary
-app_linux
-app_darwin
+bin/
 
 ### Scala ###
 *.class
