@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -10,10 +11,10 @@ import (
 )
 
 const (
-	defaultHost = "localhost"
-	defaultPort = 80
-	defaultTime = 3 * 60 * 1000
-	defaultFile = "testdata/param.json"
+	defaultHost  = "localhost"
+	defaultPort  = 80
+	defaultFile  = "testdata/param.json"
+	defaultAgent = "isucon_go"
 )
 
 // Exit codes. used only in Run()
@@ -23,6 +24,7 @@ const (
 	// Specific error codes. begin 10-
 	ExitCodeError = 10 + iota
 	ExitCodeParseError
+	ExitCodeInvalidArgsError
 )
 
 var (
@@ -38,10 +40,11 @@ func PrintDebugf(format string, args ...interface{}) {
 }
 
 type param struct {
-	host string
-	port int
-	time int
-	file string
+	host  string
+	port  int
+	time  int
+	file  string
+	agent string
 }
 
 // CLI is the command line interface object
@@ -53,7 +56,24 @@ type CLI struct {
 // Run invokes the CLI with the given arguments
 func (c *CLI) Run(args []string) int {
 	param := &param{}
-	c.parseArgs(args, param)
+	err := c.parseArgs(args[1:], param)
+	if err != nil {
+		fmt.Fprintf(c.errStream, "args parse error: %#v", err)
+		return ExitCodeParseError
+	}
+
+	master, err := NewMaster(param.host, param.port, param.file, param.agent)
+	if err != nil {
+		fmt.Fprintf(c.errStream, "invalid args. failed to initialize master: %#v", err)
+		return ExitCodeInvalidArgsError
+	}
+
+	result, err := master.start()
+	if err != nil {
+		fmt.Fprintf(c.errStream, "failed to benchmark run: %#v", err)
+		return ExitCodeError
+	}
+	fmt.Fprintln(c.outStream, result)
 	return ExitCodeOK
 }
 
@@ -63,12 +83,11 @@ func (c *CLI) parseArgs(args []string, p *param) error {
 
 	flags.StringVar(&p.file, "file", defaultFile, "")
 	flags.IntVar(&p.port, "port", defaultPort, "")
-	flags.IntVar(&p.time, "time", defaultTime, "")
 	flags.StringVar(&p.host, "host", defaultHost, "")
+	flags.StringVar(&p.agent, "agent", defaultAgent, "")
 
 	err := flags.Parse(args)
 	if err != nil {
-		PrintDebugf("parse error: %v", err)
 		return errors.Wrapf(ErrParseFailed, err.Error())
 	}
 	return nil

@@ -53,12 +53,12 @@ type Ctx struct {
 
 var defaultCtx = Ctx{
 	scheme:      "http",
-	host:        "localhost",
-	port:        80,
-	agent:       "isucon",
+	host:        defaultHost,
+	port:        defaultPort,
+	agent:       defaultAgent,
 	getTimeout:  30 * 1000,
 	postTimeout: 30 * 1000,
-	paramFile:   "testdata/param.json",
+	paramFile:   defaultFile,
 }
 
 func newCtx() *Ctx {

@@ -25,15 +25,16 @@ func (w *Worker) run() *Result {
 	allResult := newResult()
 	dones := make(chan Result, len(w.tasks))
 	for _, t := range w.tasks {
-		go func() {
+		go func(task Task) {
 			driver := &Driver{
 				result: newResult(),
 				ctx:    w.ctx,
 			}
-			t.Task(w.ctx, driver)
-			r := t.FinishHook(*driver.result)
+			task.Task(w.ctx, driver)
+			r := task.FinishHook(*driver.result)
+			PrintDebugf("Done: %s", reflect.TypeOf(task).Elem().Name())
 			dones <- r
-		}()
+		}(t)
 	}
 	for i := 0; i < len(w.tasks); i++ {
 		r := <-dones

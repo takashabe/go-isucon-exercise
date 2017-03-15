@@ -13,16 +13,16 @@ type Master struct {
 // create Master and benchmark context
 func NewMaster(host string, port int, file string, agent string) (*Master, error) {
 	ctx := newCtx()
-	if host != "" {
+	if host != defaultHost {
 		ctx.host = host
 	}
-	if port != 0 {
+	if port != defaultPort {
 		ctx.port = port
 	}
-	if file != "" {
+	if file != defaultFile {
 		ctx.paramFile = file
 	}
-	if agent != "" {
+	if agent != defaultAgent {
 		ctx.agent = agent
 	}
 	err := ctx.setupSessions()
@@ -33,7 +33,7 @@ func NewMaster(host string, port int, file string, agent string) (*Master, error
 	return &Master{ctx: *ctx}, nil
 }
 
-func (m *Master) start() ([]byte, error) {
+func (m *Master) start() (string, error) {
 	result := newResult()
 	orders := IsuconWorkOrder()
 	for _, o := range orders {
@@ -48,7 +48,7 @@ func (m *Master) start() ([]byte, error) {
 	json, err := result.json()
 	if err != nil {
 		PrintDebugf("failed to result.json(): %s", err.Error())
-		return nil, err
+		return "", err
 	}
-	return json, nil
+	return string(json), nil
 }

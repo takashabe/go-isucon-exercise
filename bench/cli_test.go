@@ -17,41 +17,47 @@ func TestParseArgs(t *testing.T) {
 	cases := []struct {
 		input       string
 		expectErr   error
-		expectParam param
+		expectParam *param
 	}{
 		{
-			"",
+			"./bench",
 			nil,
-			param{
-				file: defaultFile,
-				host: defaultHost,
-				port: defaultPort,
-				time: defaultTime,
+			&param{
+				host:  defaultHost,
+				port:  defaultPort,
+				file:  defaultFile,
+				agent: defaultAgent,
 			},
 		},
 		{
-			"-port 8080 -host 127.0.0.1 -file data/test.json",
+			"./bench -port 8080 -host 127.0.0.1 -file data/test.json -agent test",
 			nil,
-			param{
-				host: "127.0.0.1",
-				port: 8080,
-				time: defaultTime,
-				file: "data/test.json",
+			&param{
+				host:  "127.0.0.1",
+				port:  8080,
+				file:  "data/test.json",
+				agent: "test",
 			},
 		},
 		{
-			"-nonparam foo",
+			"./bench -nonparam foo",
 			ErrParseFailed,
-			param{},
+			&param{
+				host:  defaultHost,
+				port:  defaultPort,
+				file:  defaultFile,
+				agent: defaultAgent,
+			},
 		},
 	}
 	for i, c := range cases {
 		p := &param{}
-		err := cli.parseArgs(strings.Split(c.input, " "), p)
+		args := strings.Split(c.input, " ")
+		err := cli.parseArgs(args[1:], p)
 		if errors.Cause(err) != c.expectErr {
 			t.Errorf("#%d: want %#v, got %#v", i, c.expectErr, err)
 		}
-		if reflect.DeepEqual(p, c.expectParam) {
+		if !reflect.DeepEqual(p, c.expectParam) {
 			t.Errorf("#%d: want %d, got %d", i, c.expectParam, p)
 		}
 	}

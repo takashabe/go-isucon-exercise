@@ -1,10 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"strings"
 	"time"
+
+	"golang.org/x/net/html"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
+// Make load and check request. NOT SUPPORT CONCURRENCY
 type LoadCheckerTask struct {
 	timeout time.Time
 }
@@ -32,44 +39,100 @@ func (t *LoadCheckerTask) isTimeout() bool {
 }
 
 func (t *LoadCheckerTask) run(ctx Ctx, d *Driver) {
-	// LoadTask use 10...
+	// 0..2 Bootstrap
+	// 3..9 LoadChecker
+	// 10.. Load
 	rand.Seed(time.Now().UnixNano())
-	sub := ctx.sessions[10:]
+	sub := ctx.sessions[3:9]
 	s1 := sub[rand.Intn(len(sub))]
 	s2 := sub[rand.Intn(len(sub))]
-	s3 := sub[rand.Intn(len(sub))]
 
-	s1.lockFunc(func() {
-		d.get(s1, "/logout")
-		d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
-		d.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
+	// login from s1
+	d.get(s1, "/logout")
+	d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
+	if t.isTimeout() {
+		return
+	}
+
+	// check login s1
+	if d.getAndStatus(s1, "/login") != 200 {
+		d.getAndCheck(s1, "/login", "LOGIN PAGE BECAUSE NOT LOGGED IN", func(c *Checker) {
+			c.isStatusCode(200)
+		})
+		d.postAndCheck(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password), "LOGIN POST WHEN LOGGED OUT", func(c *Checker) {
 			c.isRedirect("/")
-			// TODO: responseUntil(ctx.postTimeout)
 		})
-	})
+		d.getAndCheck(s1, "/", "SHOW INDEX AFTER LOGIN", func(c *Checker) {
+			c.isStatusCode(200)
+		})
+	}
 	if t.isTimeout() {
 		return
 	}
 
-	s2.lockFunc(func() {
-		d.get(s2, "/logout")
-		d.post(s2, "/login", util.makeLoginParam(s2.param.Email, s2.param.Password))
-		d.getAndCheck(s2, "/following", "GET FOLLOWING", func(c *Checker) {
+	// check s2 long scenario
+	// login from s2
+	if d.getAndStatus(s2, "/") != 200 {
+		d.getAndCheck(s2, "/login", "LOGIN PAGE BECAUSE NOT LOGGED IN", func(c *Checker) {
 			c.isStatusCode(200)
 		})
-	})
+		d.postAndCheck(s2, "/login", util.makeLoginParam(s2.param.Email, s2.param.Password), "LOGIN POST WHEN LOGGED OUT", func(c *Checker) {
+			c.isRedirect("/")
+		})
+		d.getAndCheck(s2, "/", "SHOW INDEX AFTER LOGIN", func(c *Checker) {
+			c.isStatusCode(200)
+		})
+	}
 	if t.isTimeout() {
 		return
 	}
 
-	s3.lockFunc(func() {
-		d.get(s3, "/logout")
-		d.post(s3, "/login", util.makeLoginParam(s3.param.Email, s3.param.Password))
-		d.getAndCheck(s3, "/followers", "GET FOLLOWERS", func(c *Checker) {
-			c.isStatusCode(200)
+	// use with s1
+	followPath := fmt.Sprintf("/user/%d", s2.param.ID)
+	name := d.getAndContent(s1, "/following",
+		fmt.Sprintf("#following dl dd.follow-follow a[href='%s']", followPath), 0, func(node *html.Node) string {
+			return node.Attr[0].Val
 		})
-	})
-	if t.isTimeout() {
-		return
+	if name != "" {
+		// already following, do tweet
+		tweet := util.makeTweetParam()
+		d.postAndCheck(s2, "/tweet", tweet, "POST TWEET FROM FOLLOWING USER", func(c *Checker) {
+			c.isRedirect("/")
+			// TODO: c.responseUntil
+		})
+		if t.isTimeout() {
+			return
+		}
+
+		d.getAndCheck(s1, "/", "SEE FOLLOWING TWEET", func(c *Checker) {
+			c.isStatusCode(200)
+			c.contentFunc(
+				"#timeline.row.panel.panel-primary div.tweet div.tweet",
+				"フォローしているユーザのツイートが含まれていません",
+				func(se *goquery.Selection) bool {
+					text := strings.TrimSpace(se.Text())
+					return text == tweet.Get("content")
+				})
+		})
+	} else {
+		// not yet following, do follow
+		d.postAndCheck(s1, fmt.Sprintf("/follow/%d", s2.param.ID), nil, "MAKE FOLLOW", func(c *Checker) {
+			c.isRedirect("/")
+			// TODO: c.responseUntil
+		})
+		if t.isTimeout() {
+			return
+		}
+
+		d.getAndCheck(s1, "following", "FOLLOWING LIST AFTER MAKING FOLLOW", func(c *Checker) {
+			c.isStatusCode(200)
+			c.contentFunc(
+				fmt.Sprintf("#following dl dd.follow-follow a[href='%s']", followPath),
+				"フォローしたばかりのユーザが含まれていません",
+				func(se *goquery.Selection) bool {
+					text, ok := se.Attr("href")
+					return ok && text == followPath
+				})
+		})
 	}
 }

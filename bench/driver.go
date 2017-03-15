@@ -1,12 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"golang.org/x/net/html"
+
 	"github.com/pkg/errors"
+)
+
+// request error violation errors
+var (
+	causeFailedReceiveResponse = "パス '%s' からレスポンスが返ってきませんでした"
 )
 
 type Driver struct {
@@ -18,12 +26,33 @@ func (d *Driver) get(sess *Session, path string) {
 	d.getAndCheck(sess, path, "", nil)
 }
 
+func (d *Driver) getAndStatus(sess *Session, path string) int {
+	var statusCode int
+	d.getAndCheck(sess, path, "TO READ STATUS", func(c *Checker) {
+		statusCode = c.statusCode()
+	})
+	return statusCode
+}
+
+func (d *Driver) getAndContent(sess *Session, path, selector string, i int, f func(node *html.Node) string) string {
+	var content string
+	d.getAndCheck(sess, path, "TO READ NODE", func(c *Checker) {
+		doc, err := c.getDocument()
+		if err != nil {
+			return
+		}
+		sec := doc.Find(selector)
+		if sec.Size() > i {
+			content = f(sec.Get(i))
+		}
+	})
+	return content
+}
+
 func (d *Driver) getAndCheck(sess *Session, path, requestName string, check func(c *Checker)) {
 	req, err := http.NewRequest("GET", d.ctx.uri(path), nil)
 	if err != nil {
-		PrintDebugf("failed to generate request %v", err)
-		// error is regarded as a client error
-		d.result.addResponse(400)
+		log.Println(errors.Errorf("failed to generate request: %v", err.Error()))
 		return
 	}
 
@@ -66,8 +95,8 @@ func (d *Driver) postAndCheck(sess *Session, path string, params url.Values, req
 func (d *Driver) requestAndCheck(path, requestName string, req *http.Request, client *http.Client, check func(c *Checker)) {
 	res, err := client.Do(req)
 	if err != nil {
-		PrintDebugf("failed to send request. path=%s, error=%v", path, err)
-		// error is regarded as a server error
+		PrintDebugf("failed to response. path=%s, error=%v", path, err)
+		d.result.addViolation(requestName, fmt.Sprintf(causeFailedReceiveResponse, path))
 		d.result.addResponse(500)
 		return
 	}

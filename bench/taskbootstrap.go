@@ -154,8 +154,7 @@ func (t *BootstrapTask) viewProfileNoFollowUser(s, dst *Session) {
 
 func (t *BootstrapTask) postFollow(s, dst *Session) {
 	url := fmt.Sprintf("/follow/%d", dst.param.ID)
-	p := util.makeTweetParam()
-	t.d.postAndCheck(s, url, p, "POST FOLLOW", func(c *Checker) {
+	t.d.postAndCheck(s, url, nil, "POST FOLLOW", func(c *Checker) {
 		c.isRedirect("/")
 	})
 
