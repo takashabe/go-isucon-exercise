@@ -151,7 +151,7 @@ func TestRespondUntil(t *testing.T) {
 	}{
 		{
 			time.Millisecond,
-			time.Millisecond - 1,
+			time.Millisecond + 1,
 			newResult(),
 		},
 		{

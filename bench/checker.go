@@ -130,7 +130,7 @@ func (c *Checker) isContentLength(size int) {
 }
 
 func (c *Checker) respondUntil(limit time.Duration) {
-	if c.responseTime > limit {
+	if c.responseTime < limit {
 		return
 	}
 	c.addViolation(fmt.Sprintf(causeNoLongerResponse, limit))
