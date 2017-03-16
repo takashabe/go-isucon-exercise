@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // InitTask is initialize
 type InitTask struct{}
 
@@ -13,6 +15,7 @@ func (t *InitTask) FinishHook(r Result) Result {
 func (t *InitTask) Task(ctx Ctx, d *Driver) *Driver {
 	d.getAndCheck(nil, "/initialize", "INITIALIZE", func(c *Checker) {
 		c.isStatusCode(200)
+		c.respondUntil(6000 * time.Millisecond)
 	})
 
 	return d

@@ -98,7 +98,7 @@ func (t *LoadCheckerTask) run(ctx Ctx, d *Driver) {
 		tweet := util.makeTweetParam()
 		d.postAndCheck(s2, "/tweet", tweet, "POST TWEET FROM FOLLOWING USER", func(c *Checker) {
 			c.isRedirect("/")
-			// TODO: c.responseUntil
+			c.respondUntil(time.Duration(ctx.postTimeout) * time.Millisecond)
 		})
 		if t.isTimeout() {
 			return
@@ -118,7 +118,7 @@ func (t *LoadCheckerTask) run(ctx Ctx, d *Driver) {
 		// not yet following, do follow
 		d.postAndCheck(s1, fmt.Sprintf("/follow/%d", s2.param.ID), nil, "MAKE FOLLOW", func(c *Checker) {
 			c.isRedirect("/")
-			// TODO: c.responseUntil
+			c.respondUntil(time.Duration(ctx.postTimeout) * time.Millisecond)
 		})
 		if t.isTimeout() {
 			return

@@ -47,6 +47,9 @@ func (t *LoadTask) run(ctx Ctx, d *Driver) {
 		d.get(s1, "/login")
 		d.post(s1, "/login", util.makeLoginParam(s1.param.Email, s1.param.Password))
 		d.get(s1, "/")
+		d.postAndCheck(s1, "/tweet", util.makeTweetParam(), "POST TWEET", func(c *Checker) {
+			c.respondUntil(time.Duration(ctx.postTimeout) * time.Millisecond)
+		})
 	})
 	if t.isTimeout() {
 		return

@@ -35,7 +35,7 @@ type Ctx struct {
 	port   int
 	agent  string
 
-	// http client parameters
+	// request timeout
 	getTimeout  int
 	postTimeout int
 
