@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -136,6 +137,34 @@ func TestIsContentLength(t *testing.T) {
 		checker := testChecker()
 		checker.response = *c.response
 		checker.isContentLength(c.input)
+		if !reflect.DeepEqual(checker.result, c.expectResult) {
+			t.Errorf("#%d: want %v, got %v", i, c.expectResult, checker.result)
+		}
+	}
+}
+
+func TestRespondUntil(t *testing.T) {
+	cases := []struct {
+		responseTime time.Duration
+		input        time.Duration
+		expectResult *Result
+	}{
+		{
+			time.Millisecond,
+			time.Millisecond - 1,
+			newResult(),
+		},
+		{
+			time.Millisecond,
+			time.Millisecond,
+			newResult().addViolation("TEST", fmt.Sprintf(causeNoLongerResponse, time.Millisecond)),
+		},
+	}
+	for i, c := range cases {
+		checker := testChecker()
+		checker.responseTime = c.responseTime
+		checker.response = *testResponse(200)
+		checker.respondUntil(c.input)
 		if !reflect.DeepEqual(checker.result, c.expectResult) {
 			t.Errorf("#%d: want %v, got %v", i, c.expectResult, checker.result)
 		}

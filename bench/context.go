@@ -30,7 +30,6 @@ type UserSchema struct {
 // Ctx is environment settings in each Worker
 type Ctx struct {
 	// url query parameters
-	// TODO: schemeはTask側で設定出来たほうが良さそう
 	scheme string
 	host   string
 	port   int

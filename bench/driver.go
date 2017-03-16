@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/html"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-microbenchmark"
 )
 
 // request error violation errors
@@ -56,7 +57,6 @@ func (d *Driver) getAndCheck(sess *Session, path, requestName string, check func
 		return
 	}
 
-	// TODO: reuse global defined http.Client (must reuse transport)
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -80,7 +80,6 @@ func (d *Driver) postAndCheck(sess *Session, path string, params url.Values, req
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	// TODO: reuse global defined http.Client (must reuse transport)
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -93,6 +92,8 @@ func (d *Driver) postAndCheck(sess *Session, path string, params url.Values, req
 }
 
 func (d *Driver) requestAndCheck(path, requestName string, req *http.Request, client *http.Client, check func(c *Checker)) {
+	bench := microbenchmark.NewBenchmark()
+	bench.Begin()
 	res, err := client.Do(req)
 	if err != nil {
 		PrintDebugf("failed to response. path=%s, error=%v", path, err)
@@ -100,15 +101,17 @@ func (d *Driver) requestAndCheck(path, requestName string, req *http.Request, cl
 		d.result.addResponse(500)
 		return
 	}
+	time := bench.End()
 
 	d.result.addResponse(res.StatusCode)
 	if check != nil {
 		check(&Checker{
-			ctx:         d.ctx,
-			result:      d.result,
-			path:        path,
-			requestName: requestName,
-			response:    *res,
+			ctx:          d.ctx,
+			result:       d.result,
+			path:         path,
+			requestName:  requestName,
+			response:     *res,
+			responseTime: time,
 		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -20,6 +21,7 @@ var (
 	causeInvalidLocationPath  = "リダイレクト先が %s でなければなりませんが %s でした"
 	causeInvalidContentLength = "パス %s に対するレスポンスのサイズが正しくありません: %d bytes"
 	causeNoContentLength      = "リクエストパス %s に対して Content-Length がありませんでした"
+	causeNoLongerResponse     = "アプリケーションが %d ミリ秒以内に応答しませんでした"
 	causeNoStyleSheet         = "スタイルシートのパス %s への参照がありません"
 	causeNoNode               = "指定のDOM要素 '%s' が見付かりません"
 	causeDifferentNodeCount   = "指定のDOM要素 '%s' が %d 回表示されるはずですが、正しくありません"
@@ -51,13 +53,15 @@ func (d *document) set(key string, doc *goquery.Document) {
 	d.doc[key] = doc
 }
 
+// Checker is check benchmark response
 type Checker struct {
-	ctx         Ctx
-	result      *Result
-	path        string
-	requestName string
-	response    http.Response
-	document    document
+	ctx          Ctx
+	result       *Result
+	path         string
+	requestName  string
+	response     http.Response
+	responseTime time.Duration
+	document     document
 }
 
 func (c *Checker) statusCode() int {
@@ -123,6 +127,13 @@ func (c *Checker) isContentLength(size int) {
 		c.addViolation(fmt.Sprintf(causeInvalidContentLength, c.path, i))
 		return
 	}
+}
+
+func (c *Checker) respondUntil(limit time.Duration) {
+	if c.responseTime > limit {
+		return
+	}
+	c.addViolation(fmt.Sprintf(causeNoLongerResponse, limit))
 }
 
 func (c *Checker) getDocument() (*goquery.Document, error) {
