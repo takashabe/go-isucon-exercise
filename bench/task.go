@@ -33,9 +33,9 @@ func (t *taskUtil) makeTweetParam() url.Values {
 // Specific workers
 func IsuconWorkOrder() []*WorkOrder {
 	order := []*WorkOrder{
-		{30000, []Task{&InitTask{}}},
-		{30000, []Task{&BootstrapTask{}}},
-		{60000, []Task{&LoadTask{}, &LoadTask{}, &LoadCheckerTask{}}},
+		{30 * time.Second, []Task{&InitTask{}}},
+		{30 * time.Second, []Task{&BootstrapTask{}}},
+		{60 * time.Second, []Task{&LoadTask{}, &LoadTask{}, &LoadCheckerTask{}}},
 	}
 	return order
 }

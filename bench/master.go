@@ -1,7 +1,9 @@
 package main
 
+import "time"
+
 type WorkOrder struct {
-	runningTime int
+	runningTime time.Duration
 	tasks       []Task
 }
 

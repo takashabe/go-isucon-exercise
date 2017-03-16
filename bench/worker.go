@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 )
 
 // Worker is send requests
@@ -13,7 +14,7 @@ type Worker struct {
 	mu    sync.Mutex
 }
 
-func NewWorker(ctx Ctx, time int, tasks []Task) *Worker {
+func NewWorker(ctx Ctx, time time.Duration, tasks []Task) *Worker {
 	ctx.workerRunningTime = time
 	return &Worker{
 		ctx:   ctx,
@@ -44,7 +45,7 @@ func (w *Worker) run() *Result {
 }
 
 func (w *Worker) String() string {
-	s := fmt.Sprintf("Runningtime: %d:\n", w.ctx.workerRunningTime)
+	s := fmt.Sprintf("Runningtime %v:\n", w.ctx.workerRunningTime)
 	for _, t := range w.tasks {
 		s = s + fmt.Sprintf("\t%s", reflect.TypeOf(t).Elem().Name())
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -36,11 +37,11 @@ type Ctx struct {
 	agent  string
 
 	// request timeout
-	getTimeout  int
-	postTimeout int
+	getTimeout  time.Duration
+	postTimeout time.Duration
 
 	// worker running time
-	workerRunningTime int
+	workerRunningTime time.Duration
 
 	// parameter json file
 	paramFile string
@@ -51,13 +52,14 @@ type Ctx struct {
 }
 
 var defaultCtx = Ctx{
-	scheme:      "http",
-	host:        defaultHost,
-	port:        defaultPort,
-	agent:       defaultAgent,
-	getTimeout:  30 * 1000,
-	postTimeout: 30 * 1000,
-	paramFile:   defaultFile,
+	scheme:            "http",
+	host:              defaultHost,
+	port:              defaultPort,
+	agent:             defaultAgent,
+	getTimeout:        30 * time.Second,
+	postTimeout:       30 * time.Second,
+	workerRunningTime: 30 * time.Second,
+	paramFile:         defaultFile,
 }
 
 func newCtx() *Ctx {

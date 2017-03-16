@@ -133,7 +133,7 @@ func (c *Checker) respondUntil(limit time.Duration) {
 	if c.responseTime < limit {
 		return
 	}
-	c.addViolation(fmt.Sprintf(causeNoLongerResponse, limit))
+	c.addViolation(fmt.Sprintf(causeNoLongerResponse, limit/time.Millisecond))
 }
 
 func (c *Checker) getDocument() (*goquery.Document, error) {

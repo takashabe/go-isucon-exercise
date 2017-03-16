@@ -157,7 +157,7 @@ func TestRespondUntil(t *testing.T) {
 		{
 			time.Millisecond,
 			time.Millisecond,
-			newResult().addViolation("TEST", fmt.Sprintf(causeNoLongerResponse, time.Millisecond)),
+			newResult().addViolation("TEST", fmt.Sprintf(causeNoLongerResponse, 1)),
 		},
 	}
 	for i, c := range cases {

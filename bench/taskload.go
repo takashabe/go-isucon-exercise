@@ -18,8 +18,7 @@ func (t *LoadTask) FinishHook(r Result) Result {
 }
 
 func (t *LoadTask) Task(ctx Ctx, d *Driver) *Driver {
-	runningTime := ctx.workerRunningTime
-	t.timeout = time.Now().Add(time.Millisecond * time.Duration(runningTime))
+	t.timeout = time.Now().Add(ctx.workerRunningTime)
 	for {
 		if t.isTimeout() {
 			return d
