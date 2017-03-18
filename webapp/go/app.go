@@ -544,6 +544,7 @@ func main() {
 	r.ServeFile("/css/*filepath", http.Dir("static/css"))
 
 	log.Println("running server...")
+	r.PrintRoutes(os.Stdout)
 	http.ListenAndServe(":8080", r)
 }
 
