@@ -1,15 +1,15 @@
-DROP DATABASE IF EXISTS portal;
-CREATE DATABASE IF NOT EXISTS portal;
+-- CREATE user 'portal';
+-- GRANT ALL PRIVILEGES ON *.* TO 'portal'@'%';
+-- CREATE DATABASE IF NOT EXISTS portal;
 use portal;
-
 
 CREATE TABLE IF NOT EXISTS teams (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `team` varchar(128) NOT NULL UNIQUE,
+  `name` varchar(128) NOT NULL UNIQUE,
   `password` varchar(32) NOT NULL,
   `email` varchar(128) NOT NULL UNIQUE,
-  `instance` varchar(128),
-) DEFAULT CHARSET=utf8mb4;
+  `instance` varchar(128)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS scores (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -18,13 +18,13 @@ CREATE TABLE IF NOT EXISTS scores (
   `score` int NOT NULL,
   `submitted_at` timestamp,
   `json` text
-) DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS highscores (
   `team_id` int NOT NULL PRIMARY KEY,
   `score` int NOT NULL,
   `submitted_at` timestamp
-) DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS messages (
   `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -33,4 +33,4 @@ CREATE TABLE IF NOT EXISTS messages (
   `content` TEXT NOT NULL,
   `show_at` timestamp NOT NULL,
   `hide_at` timestamp NOT NULL
-) DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
