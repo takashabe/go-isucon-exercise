@@ -23,7 +23,7 @@ Receive from benchmark:
 | Message                     |                                                         |
 | ---                         | ---                                                     |
 | Data []byte                 | directly json from the benchmark                        |
-| Attribute map[string]string | "team_id": TEAM_ID,<br>"cretaed_at": UNIX_TIME_SECONDS} |
+| Attribute map[string]string | "team_id": TEAM_ID,<br>"cretaed_at": CREATE_TIME        |
 
 #### Queue flow
 
