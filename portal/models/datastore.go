@@ -1,7 +1,9 @@
 package models
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
@@ -53,13 +55,19 @@ func (d *Datastore) findTeamByID(id int) (*sql.Row, error) {
 }
 
 func (d *Datastore) saveScore(q QueueResponse) error {
-	stmt, err := d.conn.Prepare("insert into scores team_id, summary, score, submitted_at, json values(?, ?, ?, ?, ?)")
+	stmt, err := d.conn.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
+	var raw bytes.Buffer
+	err = json.NewEncoder(&raw).Encode(q.BenchmarkResult)
+	if err != nil {
+		return err
+	}
+
 	summary, score := calculateScore(q.BenchmarkResult)
-	_, err = stmt.Exec(q.TeamID, summary, score, q.CreatedAt, q.BenchmarkResult)
+	_, err = stmt.Exec(q.TeamID, summary, score, q.CreatedAt, raw.String())
 	return err
 }

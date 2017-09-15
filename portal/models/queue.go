@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -68,9 +69,9 @@ func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic) (*cl
 }
 
 // Publish send queue message
-func (q *Queue) Publish(ctx context.Context, teamID string) error {
+func (q *Queue) Publish(ctx context.Context, teamID int) error {
 	result := q.c.Topic(PubsubServerName).Publish(ctx, &client.Message{
-		Attributes: map[string]string{"team_id": teamID},
+		Attributes: map[string]string{"team_id": fmt.Sprintf("%d", teamID)},
 	})
 	_, err := result.Get(ctx)
 	return err
@@ -104,7 +105,7 @@ type QueueResponse struct {
 }
 
 // PullAndSave receive queue message and save message for Datastore
-func (q *Queue) PullAndSave(ctx context.Context, teamID string) error {
+func (q *Queue) PullAndSave(ctx context.Context) error {
 	var (
 		response QueueResponse
 		result   BenchmarkResult
@@ -120,6 +121,7 @@ func (q *Queue) PullAndSave(ctx context.Context, teamID string) error {
 			response.Err = err
 			return
 		}
+		response.BenchmarkResult = result
 
 		id, err := strconv.Atoi(msg.Attributes["team_id"])
 		if err != nil {
@@ -128,19 +130,23 @@ func (q *Queue) PullAndSave(ctx context.Context, teamID string) error {
 		}
 		response.TeamID = id
 
-		t, err := time.Parse(time.UnixDate, msg.Attributes["created_at"])
+		unixTime, err := strconv.ParseInt(msg.Attributes["created_at"], 10, 64)
 		if err != nil {
 			response.Err = err
 			return
 		}
-		response.CreatedAt = t
+		response.CreatedAt = time.Unix(unixTime, 0)
 	})
 	if err != nil {
 		return err
 	}
 
 	if response.Err != nil {
-		return sub.Nack(ctx, []string{ackID})
+		err := response.Err
+		if nerr := sub.Nack(ctx, []string{ackID}); nerr != nil {
+			err = errors.Wrap(err, nerr.Error())
+		}
+		return err
 	}
 
 	d, err := newDatastore()
