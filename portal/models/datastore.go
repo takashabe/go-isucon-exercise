@@ -51,3 +51,15 @@ func (d *Datastore) findTeamByEmailAndPassword(email, password string) (*sql.Row
 func (d *Datastore) findTeamByID(id int) (*sql.Row, error) {
 	return d.queryRow("select id, name, instance from teams where id=?", id)
 }
+
+func (d *Datastore) saveScore(q QueueResponse) error {
+	stmt, err := d.conn.Prepare("insert into scores team_id, summary, score, submitted_at, json values(?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	summary, score := calculateScore(q.BenchmarkResult)
+	_, err = stmt.Exec(q.TeamID, summary, score, q.CreatedAt, q.BenchmarkResult)
+	return err
+}
