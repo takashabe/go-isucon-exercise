@@ -71,3 +71,8 @@ func (d *Datastore) saveScore(q QueueResponse) error {
 	_, err = stmt.Exec(q.TeamID, summary, score, q.CreatedAt, raw.String())
 	return err
 }
+
+func (d *Datastore) findScoreByIDAndTeamID(scoreID, teamID int) (*sql.Row, error) {
+	return d.queryRow("select id, summary, score, json from scores where id=? and team_id=?",
+		scoreID, teamID)
+}

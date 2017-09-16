@@ -26,3 +26,31 @@ func calculateScore(raw BenchmarkResult) (summary string, score int) {
 	}
 	return
 }
+
+// Score represent benchmark score
+type Score struct {
+	ID      int    `json:"id"`
+	Summary string `json:"summary"`
+	Score   int    `json:"score"`
+	Detail  []byte `json:"detail"`
+}
+
+// NewScore returns initialized Score
+func NewScore() *Score {
+	return &Score{}
+}
+
+// Get returns score object
+func (s *Score) Get(scoreID, teamID int) (*Score, error) {
+	d, err := NewDatastore()
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := d.findScoreByIDAndTeamID(scoreID, teamID)
+	if err != nil {
+		return nil, err
+	}
+	err = row.Scan(&s.ID, &s.Summary, &s.Score, &s.Detail)
+	return s, err
+}
