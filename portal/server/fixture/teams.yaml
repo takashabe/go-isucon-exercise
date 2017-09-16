@@ -1,0 +1,12 @@
+table: teams
+record:
+  - id: 1
+    name: team1
+    instance: localhost:8080
+    email: foo
+    password: foo
+  - id: 2
+    name: team2
+    instance: unknown
+    email: bar
+    password: bar
