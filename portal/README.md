@@ -31,3 +31,11 @@ Receive from benchmark:
 2. Receive queue
 3. Saves the receive queue message to Database
 4. Show result message in portal client via the Database
+
+#### Memo
+
+* `/queues` algorithm
+  * call `/enqueue` and save `msg_id`
+  * call `{pubsub}/stat/{subscription}` for the msg_id set
+    * need implements msg_id set
+  * highlighting my team_id that match the msg_id set and the queues table
