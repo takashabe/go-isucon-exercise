@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql" // mysql driver
 )
 
 // Datastore represent MySQL adapter
 type Datastore struct {
-	conn *sql.DB
+	Conn *sql.DB
 }
 
-func newDatastore() (*Datastore, error) {
+// NewDatastore returns initialized Datastore
+func NewDatastore() (*Datastore, error) {
 	db, err := sql.Open("mysql", "portal@tcp(localhost:3306)/portal?parseTime=true")
 	if err != nil {
 		return nil, err
@@ -22,11 +24,11 @@ func newDatastore() (*Datastore, error) {
 		return nil, err
 	}
 
-	return &Datastore{conn: db}, nil
+	return &Datastore{Conn: db}, nil
 }
 
 func (d *Datastore) query(q string, args ...interface{}) (*sql.Rows, error) {
-	stmt, err := d.conn.Prepare(q)
+	stmt, err := d.Conn.Prepare(q)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +38,7 @@ func (d *Datastore) query(q string, args ...interface{}) (*sql.Rows, error) {
 }
 
 func (d *Datastore) queryRow(q string, args ...interface{}) (*sql.Row, error) {
-	stmt, err := d.conn.Prepare(q)
+	stmt, err := d.Conn.Prepare(q)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +57,7 @@ func (d *Datastore) findTeamByID(id int) (*sql.Row, error) {
 }
 
 func (d *Datastore) saveScore(q QueueResponse) error {
-	stmt, err := d.conn.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
+	stmt, err := d.Conn.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}

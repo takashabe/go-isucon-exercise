@@ -149,7 +149,7 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		return err
 	}
 
-	d, err := newDatastore()
+	d, err := NewDatastore()
 	if err != nil {
 		if nerr := sub.Nack(ctx, []string{ackID}); nerr != nil {
 			err = errors.Wrap(err, nerr.Error())

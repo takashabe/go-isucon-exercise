@@ -10,11 +10,11 @@ import (
 )
 
 func setupFixture(t *testing.T) {
-	db, err := newDatastore()
+	db, err := NewDatastore()
 	if err != nil {
 		t.Fatalf("want non nil, got %v", err)
 	}
-	f := fixture.NewFixture(db.conn, "mysql")
+	f := fixture.NewFixture(db.Conn, "mysql")
 	err = f.LoadSQL("fixture/schema.sql")
 	err = f.Load("fixture/teams.yaml")
 	if err != nil {

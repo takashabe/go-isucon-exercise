@@ -14,7 +14,7 @@ func NewTeam() *Team {
 
 // Authentication returns Team when succeed authenticate
 func (t *Team) Authentication(email, password string) (*Team, error) {
-	d, err := newDatastore()
+	d, err := NewDatastore()
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (t *Team) Authentication(email, password string) (*Team, error) {
 
 // Get returns Team that assigned fields
 func (t *Team) Get(id int) (*Team, error) {
-	d, err := newDatastore()
+	d, err := NewDatastore()
 	if err != nil {
 		return nil, err
 	}
