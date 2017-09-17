@@ -47,7 +47,7 @@
   branch = "master"
   name = "github.com/takashabe/go-fixture"
   packages = [".","mysql"]
-  revision = "1ee1fca5984cac0578071d3760c4c6a783658fea"
+  revision = "9cfb362ace344d429b1eae5e88f1a37460792647"
 
 [[projects]]
   branch = "master"
