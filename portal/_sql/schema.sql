@@ -1,6 +1,3 @@
--- CREATE user 'portal';
--- GRANT ALL PRIVILEGES ON *.* TO 'portal'@'%';
--- CREATE DATABASE IF NOT EXISTS portal;
 use portal;
 
 CREATE TABLE IF NOT EXISTS teams (
@@ -14,7 +11,7 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE TABLE IF NOT EXISTS queues (
   `id`           int          NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `team_id`      int          NOT NULL,
-  `msg_id`       varchar(128) UNIQUE
+  `msg_id`       varchar(128) UNIQUE,
   `submitted_at` timestamp
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
