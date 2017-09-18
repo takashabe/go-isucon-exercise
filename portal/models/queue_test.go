@@ -55,21 +55,32 @@ func TestNewQueue(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
+	setupFixture(t)
 	ts := setupPubsub(t)
 	defer ts.Close()
 
+	inputTeam := 2
 	q, err := NewQueue(ts.URL)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
 	ctx := context.Background()
-	err = q.Publish(ctx, 1)
+	err = q.Publish(ctx, inputTeam)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	d, err := NewDatastore()
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	_, err = d.queryRow("select * from queues where team_id=?", inputTeam)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
 }
 
 func TestPull(t *testing.T) {
+	setupFixture(t)
 	ts := setupPubsub(t)
 	defer ts.Close()
 

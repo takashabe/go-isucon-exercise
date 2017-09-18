@@ -56,6 +56,17 @@ func (d *Datastore) findTeamByID(id int) (*sql.Row, error) {
 	return d.queryRow("select id, name, instance from teams where id=?", id)
 }
 
+func (d *Datastore) saveQueues(teamID int, msgID string, submittedAt time.Time) error {
+	stmt, err := d.Conn.Prepare("insert into queues (team_id, msg_id, submitted_at) values(?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamID, msgID, submittedAt)
+	return err
+}
+
 func (d *Datastore) saveScore(q QueueResponse) error {
 	stmt, err := d.Conn.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
 	if err != nil {

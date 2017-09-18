@@ -70,11 +70,20 @@ func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic) (*cl
 
 // Publish send queue message
 func (q *Queue) Publish(ctx context.Context, teamID int) error {
+	now := time.Now()
+	d, err := NewDatastore()
+	if err != nil {
+		return err
+	}
+
 	result := q.c.Topic(PubsubServerName).Publish(ctx, &client.Message{
 		Attributes: map[string]string{"team_id": fmt.Sprintf("%d", teamID)},
 	})
-	_, err := result.Get(ctx)
-	return err
+	msgID, err := result.Get(ctx)
+	if err != nil {
+		return err
+	}
+	return d.saveQueues(teamID, msgID, now)
 }
 
 // BenchmarkResult represent the benchmark result JSON
