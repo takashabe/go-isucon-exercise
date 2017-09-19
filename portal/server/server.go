@@ -96,12 +96,12 @@ func (s *Server) Routes() *router.Router {
 	r.Post("/login", s.Login)
 
 	// main page
-	r.Get("/", nil)
+	r.Get("/", s.GetTeam)
 	r.Get("/queues", s.Queues)
 	r.Post("/enqueue", s.Enqueue)
 	r.Get("/history", s.History)
 	r.Get("/bench_detail/:id", s.ScoreDetail)
-	r.Get("/leader_board", nil)
+	// r.Get("/leader_board", nil)
 
 	return r
 }

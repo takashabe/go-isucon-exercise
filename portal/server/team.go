@@ -71,3 +71,13 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	sess.Set(sessionKeyTeam, team.ID)
 	s.redirect(w, r, "/")
 }
+
+// GetTeam returns login team
+func (s *Server) GetTeam(w http.ResponseWriter, r *http.Request) {
+	team, err := s.currentTeam(w, r)
+	if err != nil {
+		s.unauthorized(w, err)
+		return
+	}
+	JSON(w, http.StatusOK, team)
+}

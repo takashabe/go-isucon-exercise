@@ -1,8 +1,10 @@
 package server
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -69,5 +71,31 @@ func TestLogout(t *testing.T) {
 	}
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("want %d, got %d", http.StatusOK, res.StatusCode)
+	}
+}
+
+func TestGetTeam(t *testing.T) {
+	ts := setupServer(t, "")
+	defer ts.Close()
+
+	client := clientWithNonRedirect()
+	values := url.Values{}
+	values.Add("email", "foo")
+	values.Add("password", "foo")
+	client.Jar = login(t, ts, values)
+
+	res, err := client.Get(ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	defer res.Body.Close()
+
+	payload, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	expect := []byte(`{"ID":1,"Name":"team1","Instance":"localhost:8080"}`)
+	if !reflect.DeepEqual(expect, payload) {
+		t.Errorf("want %s, got %s", expect, payload)
 	}
 }
