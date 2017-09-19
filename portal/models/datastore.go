@@ -34,7 +34,7 @@ func (d *Datastore) query(q string, args ...interface{}) (*sql.Rows, error) {
 	}
 	defer stmt.Close()
 
-	return stmt.Query(args)
+	return stmt.Query(args...)
 }
 
 func (d *Datastore) queryRow(q string, args ...interface{}) (*sql.Row, error) {
