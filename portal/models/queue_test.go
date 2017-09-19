@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
@@ -134,5 +135,58 @@ func TestPull(t *testing.T) {
 		if err != nil {
 			t.Fatalf("#%d: want non error, got %v", i, err)
 		}
+	}
+}
+
+func TestCurrentQueues(t *testing.T) {
+	setupFixture(t)
+	ts := setupPubsub(t)
+	defer ts.Close()
+
+	q, err := NewQueue(ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	publishes := []int{1, 2, 3}
+	ctx := context.Background()
+	for _, id := range publishes {
+		err := q.Publish(ctx, id)
+		if err != nil {
+			t.Fatalf("want non error, got %v", err)
+		}
+	}
+
+	myTeam := 1
+	d, err := NewDatastore()
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	args := make([]interface{}, len(publishes))
+	for i, v := range publishes {
+		args[i] = v
+	}
+	rows, err := d.query("select team_id, msg_id from queues where team_id in (?, ?, ?)", args...)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	expectQueues := []CurrentQueue{}
+	for rows.Next() {
+		var (
+			msgID  string
+			teamID int
+		)
+		err := rows.Scan(&teamID, &msgID)
+		if err != nil {
+			t.Fatalf("want non error, got %v", err)
+		}
+		expectQueues = append(expectQueues, CurrentQueue{msgID, teamID == myTeam})
+	}
+
+	qs, err := q.CurrentQueues(ctx, myTeam)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	if !reflect.DeepEqual(expectQueues, qs) {
+		t.Errorf("want %v, got %v", expectQueues, qs)
 	}
 }

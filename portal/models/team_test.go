@@ -17,6 +17,7 @@ func setupFixture(t *testing.T) {
 	f := fixture.NewFixture(db.Conn, "mysql")
 	err = f.LoadSQL("fixture/schema.sql")
 	err = f.Load("fixture/teams.yaml")
+	err = f.Load("fixture/queues.yaml")
 	if err != nil {
 		t.Fatalf("want non nil, got %v", err)
 	}

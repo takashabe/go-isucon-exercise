@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -174,4 +175,55 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 	}
 
 	return sub.Ack(ctx, []string{ackID})
+}
+
+// CurrentQueue represent current active queue
+type CurrentQueue struct {
+	ID     string
+	MyTeam bool
+}
+
+// CurrentQueues returns active current queues
+func (q *Queue) CurrentQueues(ctx context.Context, teamID int) ([]CurrentQueue, error) {
+	d, err := NewDatastore()
+	if err != nil {
+		return nil, err
+	}
+
+	sub := q.c.Subscription(PubsubServerName)
+	raw, err := sub.StatsDetail(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	type jsonMapper struct {
+		Messages []string `json:"subscription.benchmark.current_messages"`
+	}
+	var decode jsonMapper
+	err = json.NewDecoder(bytes.NewBuffer(raw)).Decode(&decode)
+	if err != nil {
+		return nil, err
+	}
+	if len(decode.Messages) == 0 {
+		return []CurrentQueue{}, nil
+	}
+
+	row, err := d.findQueueByTeamID(teamID)
+	if err != nil {
+		return nil, err
+	}
+	var msgID string
+	err = row.Scan(&msgID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	queues := []CurrentQueue{}
+	for _, msg := range decode.Messages {
+		queues = append(queues, CurrentQueue{
+			ID:     msg,
+			MyTeam: msg == msgID,
+		})
+	}
+	return queues, nil
 }
