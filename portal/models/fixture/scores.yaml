@@ -1,0 +1,30 @@
+table: scores
+record:
+  - id: 1
+    team_id: 1
+    summary: success
+    score: 100
+    submitted_at: 2017-09-01 00:00:00
+    json: |
+      {"valid":true,"request_count":3651,"elapsed_time":0,"response":{"success":1452,"redirect":2199,"client_error":0,"server_error":0,"exception":0},"violations":[]}
+  - id: 2
+    team_id: 1
+    summary: success
+    score: 100
+    submitted_at: 2017-09-01 00:00:01
+    json: |
+      {"valid":true,"request_count":3651,"elapsed_time":0,"response":{"success":1452,"redirect":2199,"client_error":0,"server_error":0,"exception":0},"violations":[]}
+  - id: 3
+    team_id: 2
+    summary: success
+    score: 100
+    submitted_at: 2017-09-01 00:00:00
+    json: |
+      {"valid":true,"request_count":3651,"elapsed_time":0,"response":{"success":1452,"redirect":2199,"client_error":0,"server_error":0,"exception":0},"violations":[]}
+  - id: 4
+    team_id: 1
+    summary: fail
+    score: 0
+    submitted_at: 2017-09-01 00:00:02
+    json: |
+      {"valid":false,"request_count":100,"elapsed_time":200,"response":{"success":98,"redirect":0,"client_error":0,"server_error":2,"exception":0},"violations":[{"request_type":"DUMMY","description":"アプリケーションが100ミリ秒以内に応答しませんでした","num":2}]}

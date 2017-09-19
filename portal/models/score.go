@@ -54,3 +54,27 @@ func (s *Score) Get(scoreID, teamID int) (*Score, error) {
 	err = row.Scan(&s.ID, &s.Summary, &s.Score, &s.Detail)
 	return s, err
 }
+
+// History returns all team score
+func (s *Score) History(teamID int) ([]*Score, error) {
+	d, err := NewDatastore()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := d.findScoreHistoryByIDAndTeamID(teamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	history := []*Score{}
+	for rows.Next() {
+		score := &Score{}
+		err := rows.Scan(&score.ID, &score.Summary, &score.Score, &score.Detail)
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, score)
+	}
+	return history, nil
+}
