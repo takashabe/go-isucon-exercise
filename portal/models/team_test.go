@@ -4,27 +4,10 @@ import (
 	"database/sql"
 	"reflect"
 	"testing"
-
-	fixture "github.com/takashabe/go-fixture"
-	_ "github.com/takashabe/go-fixture/mysql" // fixture driver
 )
 
-func setupFixture(t *testing.T) {
-	db, err := NewDatastore()
-	if err != nil {
-		t.Fatalf("want non nil, got %v", err)
-	}
-	f := fixture.NewFixture(db.Conn, "mysql")
-	err = f.LoadSQL("fixture/schema.sql")
-	err = f.Load("fixture/teams.yaml")
-	err = f.Load("fixture/queues.yaml")
-	if err != nil {
-		t.Fatalf("want non nil, got %v", err)
-	}
-}
-
 func TestAuthenticate(t *testing.T) {
-	setupFixture(t)
+	setupFixture(t, "fixture/teams.yaml")
 
 	cases := []struct {
 		email      string
@@ -57,7 +40,7 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	setupFixture(t)
+	setupFixture(t, "fixture/teams.yaml")
 
 	cases := []struct {
 		id         int

@@ -9,19 +9,7 @@ import (
 	"time"
 
 	"github.com/takashabe/go-message-queue/client"
-	"github.com/takashabe/go-message-queue/server"
 )
-
-func setupPubsub(t *testing.T) *httptest.Server {
-	s, err := server.NewServer("testdata/config.yaml")
-	if err != nil {
-		t.Fatalf("failed to server.NewServer, error=%v", err)
-	}
-	if err := s.PrepareServer(); err != nil {
-		t.Fatalf("failed to server.PrepareServer, error=%v", err)
-	}
-	return httptest.NewServer(server.Routes())
-}
 
 func publishDummyBenchmarkResult(t *testing.T, ts *httptest.Server, payload []byte) {
 	q, err := NewQueue(ts.URL)
@@ -56,7 +44,7 @@ func TestNewQueue(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	setupFixture(t)
+	setupFixture(t, "fixture/teams.yaml", "fixture/queues.yaml")
 	ts := setupPubsub(t)
 	defer ts.Close()
 
@@ -81,7 +69,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestPull(t *testing.T) {
-	setupFixture(t)
+	setupFixture(t, "fixture/teams.yaml", "fixture/queues.yaml")
 	ts := setupPubsub(t)
 	defer ts.Close()
 
@@ -139,7 +127,7 @@ func TestPull(t *testing.T) {
 }
 
 func TestCurrentQueues(t *testing.T) {
-	setupFixture(t)
+	setupFixture(t, "fixture/teams.yaml", "fixture/queues.yaml")
 	ts := setupPubsub(t)
 	defer ts.Close()
 
