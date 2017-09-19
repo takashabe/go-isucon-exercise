@@ -179,8 +179,8 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 
 // CurrentQueue represent current active queue
 type CurrentQueue struct {
-	ID     string
-	MyTeam bool
+	ID     string `json:"message_id"`
+	MyTeam bool   `json:"my_team"`
 }
 
 // CurrentQueues returns active current queues

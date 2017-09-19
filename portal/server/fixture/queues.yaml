@@ -1,0 +1,4 @@
+table: queues
+record:
+  - team_id: 99
+    msg_id: foo
