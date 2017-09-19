@@ -45,6 +45,8 @@ func TestEnqueue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("want status code %d, got %d", http.StatusOK, res.StatusCode)
 	}
