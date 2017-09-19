@@ -100,7 +100,7 @@ func (s *Server) Routes() *router.Router {
 	r.Get("/queues", s.Queues)
 	r.Post("/enqueue", s.Enqueue)
 	r.Get("/history", s.History)
-	r.Get("/bench_detail:id", s.ScoreDetail)
+	r.Get("/bench_detail/:id", s.ScoreDetail)
 	r.Get("/leader_board", nil)
 
 	return r

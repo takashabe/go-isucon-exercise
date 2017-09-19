@@ -32,7 +32,7 @@ type Score struct {
 	ID      int    `json:"id"`
 	Summary string `json:"summary"`
 	Score   int    `json:"score"`
-	Detail  []byte `json:"detail"`
+	Detail  string `json:"detail"`
 }
 
 // NewScore returns initialized Score

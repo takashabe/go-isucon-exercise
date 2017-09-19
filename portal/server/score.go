@@ -8,13 +8,17 @@ import (
 
 // History returns score histories
 func (s *Server) History(w http.ResponseWriter, r *http.Request) {
-	_, err := s.currentTeam(w, r)
+	team, err := s.currentTeam(w, r)
 	if err != nil {
 		s.unauthorized(w, err)
 		return
 	}
 
-	// TODO: implements model method
+	scores, err := models.NewScore().History(team.ID)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "failed to get history")
+	}
+	JSON(w, http.StatusOK, scores)
 }
 
 // ScoreDetail returns score detail
