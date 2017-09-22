@@ -16,6 +16,12 @@ func setupFixture(t *testing.T, files ...string) {
 		t.Fatalf("want non nil, got %v", err)
 	}
 	f := fixture.NewFixture(db.Conn, "mysql")
+	// always necessary file
+	err = f.LoadSQL("fixture/schema.sql")
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
 	for _, file := range files {
 		if strings.HasSuffix(file, ".sql") {
 			err = f.LoadSQL(file)

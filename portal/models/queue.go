@@ -13,8 +13,11 @@ import (
 	"github.com/takashabe/go-message-queue/client"
 )
 
-// PubsubServerName represent pubsub topic and subscription name
-const PubsubServerName = "benchmark"
+// pubsub server names
+const (
+	pubsubPortal      = "portal"
+	pubsubBenchmarker = "result"
+)
 
 // Queue is client for the pubsub
 type Queue struct {
@@ -32,19 +35,28 @@ func NewQueue(addr string) (*Queue, error) {
 		c: client,
 	}
 
-	topic, err := q.setupTopic(ctx)
+	portalTopic, err := q.setupTopic(ctx, pubsubPortal)
 	if err != nil {
 		return nil, err
 	}
-	_, err = q.setupSubscription(ctx, topic)
+	_, err = q.setupSubscription(ctx, portalTopic, pubsubPortal)
+	if err != nil {
+		return nil, err
+	}
+
+	benchTopic, err := q.setupTopic(ctx, pubsubBenchmarker)
+	if err != nil {
+		return nil, err
+	}
+	_, err = q.setupSubscription(ctx, benchTopic, pubsubBenchmarker)
 	if err != nil {
 		return nil, err
 	}
 	return q, nil
 }
 
-func (q *Queue) setupTopic(ctx context.Context) (*client.Topic, error) {
-	exist, err := q.c.Topic(PubsubServerName).Exists(ctx)
+func (q *Queue) setupTopic(ctx context.Context, id string) (*client.Topic, error) {
+	exist, err := q.c.Topic(id).Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +64,11 @@ func (q *Queue) setupTopic(ctx context.Context) (*client.Topic, error) {
 		return nil, nil
 	}
 
-	return q.c.CreateTopic(ctx, PubsubServerName)
+	return q.c.CreateTopic(ctx, id)
 }
 
-func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic) (*client.Subscription, error) {
-	sub := q.c.Subscription(PubsubServerName)
+func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic, id string) (*client.Subscription, error) {
+	sub := q.c.Subscription(id)
 	exist, err := sub.Exists(ctx)
 	if err != nil {
 		return nil, err
@@ -66,25 +78,26 @@ func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic) (*cl
 	}
 
 	cfg := client.SubscriptionConfig{Topic: topic}
-	return q.c.CreateSubscription(ctx, PubsubServerName, cfg)
+	return q.c.CreateSubscription(ctx, id, cfg)
 }
 
 // Publish send queue message
 func (q *Queue) Publish(ctx context.Context, teamID int) error {
+func (q *Queue) Publish(ctx context.Context, teamID int) (string, error) {
 	now := time.Now()
 	d, err := NewDatastore()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	result := q.c.Topic(PubsubServerName).Publish(ctx, &client.Message{
+	result := q.c.Topic(pubsubPortal).Publish(ctx, &client.Message{
 		Attributes: map[string]string{"team_id": fmt.Sprintf("%d", teamID)},
 	})
 	msgID, err := result.Get(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return d.saveQueues(teamID, msgID, now)
+	return msgID, d.saveQueues(teamID, msgID, now)
 }
 
 // BenchmarkResult represent the benchmark result JSON
@@ -111,6 +124,7 @@ type QueueResponse struct {
 	TeamID          int
 	BenchmarkResult BenchmarkResult
 	CreatedAt       time.Time
+	SourceMessageID string
 	Err             error
 }
 
@@ -122,7 +136,7 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		ackID    string
 	)
 
-	sub := q.c.Subscription(PubsubServerName)
+	sub := q.c.Subscription(pubsubBenchmarker)
 	err := sub.Receive(ctx, func(ctx context.Context, msg *client.Message) {
 		ackID = msg.AckID
 
@@ -133,19 +147,25 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		}
 		response.BenchmarkResult = result
 
-		id, err := strconv.Atoi(msg.Attributes["team_id"])
+		teamID, err := strconv.Atoi(msg.Attributes["team_id"])
 		if err != nil {
-			response.Err = err
+			response.Err = errors.Wrapf(err, "invalid attributes: team_id")
 			return
 		}
-		response.TeamID = id
+		response.TeamID = teamID
 
 		unixTime, err := strconv.ParseInt(msg.Attributes["created_at"], 10, 64)
 		if err != nil {
-			response.Err = err
+			response.Err = errors.Wrapf(err, "invalid attributes: created_at")
 			return
 		}
 		response.CreatedAt = time.Unix(unixTime, 0)
+
+		msgID, ok := msg.Attributes["source_msg_id"]
+		if !ok {
+			response.Err = errors.New("invalid attributes: source_msg_id")
+		}
+		response.SourceMessageID = msgID
 	})
 	if err != nil {
 		return err
@@ -190,14 +210,14 @@ func (q *Queue) CurrentQueues(ctx context.Context, teamID int) ([]CurrentQueue, 
 		return nil, err
 	}
 
-	sub := q.c.Subscription(PubsubServerName)
+	sub := q.c.Subscription(pubsubPortal)
 	raw, err := sub.StatsDetail(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	type jsonMapper struct {
-		Messages []string `json:"subscription.benchmark.current_messages"`
+		Messages []string `json:"subscription.portal.current_messages"`
 	}
 	var decode jsonMapper
 	err = json.NewDecoder(bytes.NewBuffer(raw)).Decode(&decode)

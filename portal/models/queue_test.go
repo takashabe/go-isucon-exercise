@@ -11,23 +11,37 @@ import (
 	"github.com/takashabe/go-message-queue/client"
 )
 
-func publishDummyBenchmarkResult(t *testing.T, ts *httptest.Server, payload []byte) {
+func publishDummyBenchmarkResult(t *testing.T, ts *httptest.Server, teamID int, msgID string, payload []byte) {
 	q, err := NewQueue(ts.URL)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
 	ctx := context.Background()
-	res := q.c.Topic(PubsubServerName).Publish(ctx, &client.Message{
+	res := q.c.Topic(pubsubBenchmarker).Publish(ctx, &client.Message{
 		Data: payload,
 		Attributes: map[string]string{
-			"team_id":    "1",
-			"created_at": fmt.Sprintf("%d", time.Now().Unix()),
+			"team_id":       fmt.Sprintf("%d", teamID),
+			"created_at":    fmt.Sprintf("%d", time.Now().Unix()),
+			"source_msg_id": msgID,
 		},
 	})
 	_, err = res.Get(ctx)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
+}
+
+func publishDummyBenchmarkQueue(t *testing.T, ts *httptest.Server, teamID int) string {
+	q, err := NewQueue(ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	ctx := context.Background()
+	msgID, err := q.Publish(ctx, teamID)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	return msgID
 }
 
 func TestNewQueue(t *testing.T) {
@@ -48,13 +62,13 @@ func TestPublish(t *testing.T) {
 	ts := setupPubsub(t)
 	defer ts.Close()
 
-	inputTeam := 2
+	inputTeam := 1
 	q, err := NewQueue(ts.URL)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
 	ctx := context.Background()
-	err = q.Publish(ctx, inputTeam)
+	_, err = q.Publish(ctx, inputTeam)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
@@ -113,7 +127,10 @@ func TestPull(t *testing.T) {
 		{failedPayload},
 	}
 	for i, c := range cases {
-		publishDummyBenchmarkResult(t, ts, c.payload)
+		targetTeamID := 1
+		msgID := publishDummyBenchmarkQueue(t, ts, targetTeamID)
+		publishDummyBenchmarkResult(t, ts, targetTeamID, msgID, c.payload)
+
 		q, err := NewQueue(ts.URL)
 		if err != nil {
 			t.Fatalf("#%d: want non error, got %v", i, err)
@@ -138,7 +155,7 @@ func TestCurrentQueues(t *testing.T) {
 	publishes := []int{1, 2, 3}
 	ctx := context.Background()
 	for _, id := range publishes {
-		err := q.Publish(ctx, id)
+		_, err := q.Publish(ctx, id)
 		if err != nil {
 			t.Fatalf("want non error, got %v", err)
 		}
