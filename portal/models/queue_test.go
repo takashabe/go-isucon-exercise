@@ -80,6 +80,11 @@ func TestPublish(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
+
+	_, err = q.Publish(ctx, inputTeam)
+	if err != ErrExistQueue {
+		t.Fatalf("want error %v, got %v", ErrExistQueue, err)
+	}
 }
 
 func TestPull(t *testing.T) {

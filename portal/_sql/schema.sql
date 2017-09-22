@@ -9,10 +9,11 @@ CREATE TABLE IF NOT EXISTS teams (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS queues (
-  `id`           int          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `team_id`      int          NOT NULL,
+  `id`           int          NOT     NULL AUTO_INCREMENT PRIMARY KEY,
+  `team_id`      int          NOT     NULL,
   `msg_id`       varchar(128) UNIQUE,
-  `submitted_at` timestamp
+  `submitted_at` timestamp,
+  `finished_at`  timestamp    NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS scores (

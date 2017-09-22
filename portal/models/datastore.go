@@ -7,6 +7,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql" // mysql driver
+	"github.com/pkg/errors"
 )
 
 // Datastore represent MySQL adapter
@@ -57,7 +58,7 @@ func (d *Datastore) findTeamByID(id int) (*sql.Row, error) {
 }
 
 func (d *Datastore) findQueueByTeamID(teamID int) (*sql.Row, error) {
-	return d.queryRow("select msg_id from queues where team_id=?", teamID)
+	return d.queryRow("select msg_id, finished_at from queues where team_id=? order by id desc", teamID)
 }
 
 func (d *Datastore) saveQueues(teamID int, msgID string, submittedAt time.Time) error {
@@ -71,22 +72,50 @@ func (d *Datastore) saveQueues(teamID int, msgID string, submittedAt time.Time) 
 	return err
 }
 
-func (d *Datastore) saveScore(q QueueResponse) error {
-	stmt, err := d.Conn.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
+func (d *Datastore) saveScoreAndUpdateQueue(q QueueResponse) error {
+	var raw bytes.Buffer
+	err := json.NewEncoder(&raw).Encode(q.BenchmarkResult)
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
 
-	var raw bytes.Buffer
-	err = json.NewEncoder(&raw).Encode(q.BenchmarkResult)
+	tx, err := d.Conn.Begin()
 	if err != nil {
 		return err
+	}
+	defer tx.Rollback()
+
+	update, err := tx.Prepare("update queues set finished_at=NOW() where msg_id=?")
+	if err != nil {
+		return err
+	}
+	defer update.Close()
+
+	insert, err := tx.Prepare("insert into scores (team_id, summary, score, submitted_at, json) values(?, ?, ?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer insert.Close()
+
+	res, err := update.Exec(q.SourceMessageID)
+	if err != nil {
+		return err
+	}
+	num, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		return errors.New("not exist updated rows")
 	}
 
 	summary, score := calculateScore(q.BenchmarkResult)
-	_, err = stmt.Exec(q.TeamID, summary, score, q.CreatedAt, raw.String())
-	return err
+	res, err = insert.Exec(q.TeamID, summary, score, q.CreatedAt, raw.String())
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (d *Datastore) findScoreByIDAndTeamID(scoreID, teamID int) (*sql.Row, error) {

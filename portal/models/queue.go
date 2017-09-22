@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/client"
 )
@@ -17,6 +18,11 @@ import (
 const (
 	pubsubPortal      = "portal"
 	pubsubBenchmarker = "result"
+)
+
+// Error variables
+var (
+	ErrExistQueue = errors.New("the queue already exist")
 )
 
 // Queue is client for the pubsub
@@ -82,12 +88,18 @@ func (q *Queue) setupSubscription(ctx context.Context, topic *client.Topic, id s
 }
 
 // Publish send queue message
-func (q *Queue) Publish(ctx context.Context, teamID int) error {
 func (q *Queue) Publish(ctx context.Context, teamID int) (string, error) {
 	now := time.Now()
 	d, err := NewDatastore()
 	if err != nil {
 		return "", err
+	}
+	exist, err := q.isExistQueue(d, teamID)
+	if err != nil {
+		return "", err
+	}
+	if exist {
+		return "", ErrExistQueue
 	}
 
 	result := q.c.Topic(pubsubPortal).Publish(ctx, &client.Message{
@@ -98,6 +110,24 @@ func (q *Queue) Publish(ctx context.Context, teamID int) (string, error) {
 		return "", err
 	}
 	return msgID, d.saveQueues(teamID, msgID, now)
+}
+
+// isExistQueue returns whether finished_at is NULL at the queues
+func (q *Queue) isExistQueue(d *Datastore, teamID int) (bool, error) {
+	row, err := d.findQueueByTeamID(teamID)
+	if err != nil {
+		return false, err
+	}
+
+	var (
+		msgID      string
+		finishedAt mysql.NullTime
+	)
+	err = row.Scan(&msgID, &finishedAt)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return !finishedAt.Valid, err
 }
 
 // BenchmarkResult represent the benchmark result JSON
@@ -186,7 +216,7 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		}
 		return err
 	}
-	err = d.saveScore(response)
+	err = d.saveScoreAndUpdateQueue(response)
 	if err != nil {
 		if nerr := sub.Nack(ctx, []string{ackID}); nerr != nil {
 			err = errors.Wrap(err, nerr.Error())
@@ -232,8 +262,11 @@ func (q *Queue) CurrentQueues(ctx context.Context, teamID int) ([]CurrentQueue, 
 	if err != nil {
 		return nil, err
 	}
-	var msgID string
-	err = row.Scan(&msgID)
+	var (
+		msgID      string
+		finishedAt mysql.NullTime
+	)
+	err = row.Scan(&msgID, &finishedAt)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
