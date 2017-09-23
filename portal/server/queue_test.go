@@ -35,7 +35,7 @@ func TestEnqueue(t *testing.T) {
 	defer pubsubServer.Close()
 	portalServer := setupServer(t, pubsubServer.URL)
 	defer portalServer.Close()
-	setupFixture(t, "fixture/teams.yaml")
+	setupFixture(t, "fixture/teams.yaml", "fixture/queues.yaml")
 
 	values := url.Values{}
 	values.Add("email", "foo")

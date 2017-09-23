@@ -42,9 +42,14 @@ func (s *Server) Enqueue(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err, "fialed to initialized queue")
 		return
 	}
-	err = q.Publish(context.Background(), team.ID)
+	_, err = q.Publish(context.Background(), team.ID)
 	if err != nil {
+		if err == models.ErrExistQueue {
+			Error(w, http.StatusNotFound, err, err.Error())
+			return
+		}
 		Error(w, http.StatusInternalServerError, err, "failed to enqueue")
+		return
 	}
 
 	JSON(w, http.StatusOK, "")
