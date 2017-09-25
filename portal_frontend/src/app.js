@@ -1,10 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-class Root extends React.Component {
-  render() {
-    return <p>Hello React!</p>;
-  }
-}
+import Routes from './routes.js';
 
-ReactDOM.render(<Root />, document.getElementById('root'));
+ReactDOM.render(<Routes />, document.getElementById('root'));
