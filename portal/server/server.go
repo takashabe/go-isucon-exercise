@@ -71,6 +71,7 @@ func JSON(w http.ResponseWriter, code int, src interface{}) {
 
 // Server supply HTTP server of the portal
 type Server struct {
+	port       int
 	session    *session.Manager
 	pubsubAddr string
 }
@@ -103,6 +104,8 @@ func (s *Server) Routes() *router.Router {
 	r.Get("/api/bench_detail/:id", s.ScoreDetail)
 	// r.Get("/leader_board", nil)
 
+	// frontend
+	r.ServeFile("/", "./public/index.html")
 	return r
 }
 

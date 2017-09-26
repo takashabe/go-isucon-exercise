@@ -99,3 +99,27 @@ func TestGetTeam(t *testing.T) {
 		t.Errorf("want %s, got %s", expect, payload)
 	}
 }
+
+func TestGetIndex(t *testing.T) {
+	ts := setupServer(t, "")
+	defer ts.Close()
+
+	res, err := clientWithNonRedirect().Get(ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	defer res.Body.Close()
+
+	payload, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	file, err := ioutil.ReadFile("./public/index.html")
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	if !reflect.DeepEqual(payload, file) {
+		t.Errorf("want payload content %s, got %s", file, payload)
+	}
+}
