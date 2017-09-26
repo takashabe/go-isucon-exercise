@@ -18,7 +18,7 @@ func login(t *testing.T, ts *httptest.Server, values url.Values) *cookiejar.Jar 
 	}
 	client := clientWithNonRedirect()
 	client.Jar = jar
-	res, err := client.PostForm(ts.URL+"/login", values)
+	res, err := client.PostForm(ts.URL+"/api/login", values)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
@@ -44,7 +44,7 @@ func TestEnqueue(t *testing.T) {
 
 	client := clientWithNonRedirect()
 	client.Jar = jar
-	res, err := client.Post(portalServer.URL+"/enqueue", "application/json", nil)
+	res, err := client.Post(portalServer.URL+"/api/enqueue", "application/json", nil)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
@@ -61,7 +61,7 @@ func dummyEnqueueWithTeam(t *testing.T, ts *httptest.Server, email, password str
 	values.Add("password", password)
 	client := clientWithNonRedirect()
 	client.Jar = login(t, ts, values)
-	res, err := client.Post(ts.URL+"/enqueue", "application/json", nil)
+	res, err := client.Post(ts.URL+"/api/enqueue", "application/json", nil)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
@@ -87,7 +87,7 @@ func TestQueues(t *testing.T) {
 	values.Add("password", "foo")
 	client := clientWithNonRedirect()
 	client.Jar = login(t, portalServer, values)
-	res, err := client.Get(portalServer.URL + "/queues")
+	res, err := client.Get(portalServer.URL + "/api/queues")
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}

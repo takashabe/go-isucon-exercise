@@ -25,7 +25,7 @@ func TestBenchDetail(t *testing.T) {
 		{"1", []byte(`{"id":1,"summary":"success","score":100,`)},
 	}
 	for i, c := range cases {
-		res, err := client.Get(ts.URL + "/bench_detail/" + c.input)
+		res, err := client.Get(ts.URL + "/api/bench_detail/" + c.input)
 		if err != nil {
 			t.Fatalf("#%d: want not error, got %v", i, err)
 		}
@@ -59,7 +59,7 @@ func TestHistory(t *testing.T) {
 		{"1", []byte(`{"id":1,"summary":"success","score":100,`)},
 	}
 	for i, c := range cases {
-		res, err := client.Get(ts.URL + "/bench_detail/" + c.input)
+		res, err := client.Get(ts.URL + "/api/bench_detail/" + c.input)
 		if err != nil {
 			t.Fatalf("#%d: want not error, got %v", i, err)
 		}

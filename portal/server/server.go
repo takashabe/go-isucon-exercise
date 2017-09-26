@@ -92,15 +92,15 @@ func (s *Server) Routes() *router.Router {
 	r := router.NewRouter()
 
 	// login page
-	r.Get("/login", s.Logout)
-	r.Post("/login", s.Login)
+	r.Get("/api/login", s.Logout)
+	r.Post("/api/login", s.Login)
 
 	// main page
-	r.Get("/", s.GetTeam)
-	r.Get("/queues", s.Queues)
-	r.Post("/enqueue", s.Enqueue)
-	r.Get("/history", s.History)
-	r.Get("/bench_detail/:id", s.ScoreDetail)
+	r.Get("/api/team", s.GetTeam)
+	r.Get("/api/queues", s.Queues)
+	r.Post("/api/enqueue", s.Enqueue)
+	r.Get("/api/history", s.History)
+	r.Get("/api/bench_detail/:id", s.ScoreDetail)
 	// r.Get("/leader_board", nil)
 
 	return r

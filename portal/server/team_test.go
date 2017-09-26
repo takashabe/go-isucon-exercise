@@ -38,7 +38,7 @@ func TestLogin(t *testing.T) {
 		values.Add("password", c.password)
 
 		client := clientWithNonRedirect()
-		res, err := client.PostForm(ts.URL+"/login", values)
+		res, err := client.PostForm(ts.URL+"/api/login", values)
 		if err != nil {
 			t.Fatalf("#%d: want non error, got %v", i, err)
 		}
@@ -65,7 +65,7 @@ func TestLogout(t *testing.T) {
 	defer ts.Close()
 
 	client := clientWithNonRedirect()
-	res, err := client.Get(ts.URL + "/login")
+	res, err := client.Get(ts.URL + "/api/login")
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
@@ -84,7 +84,7 @@ func TestGetTeam(t *testing.T) {
 	values.Add("password", "foo")
 	client.Jar = login(t, ts, values)
 
-	res, err := client.Get(ts.URL)
+	res, err := client.Get(ts.URL + "/api/team")
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
