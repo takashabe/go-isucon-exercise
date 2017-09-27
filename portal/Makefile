@@ -6,6 +6,9 @@ SHOW_ENV := $(shell env | grep GO_MESSAGE_QUEUE)
 build: cmd/portal/main.go
 	cd cmd/portal && go build -a
 
+start:
+	cd cmd/portal && ./portal
+
 test:
 	$(SHOW_ENV)
 	go test -v $(SUBPACKAGES)
