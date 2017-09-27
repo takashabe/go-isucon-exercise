@@ -106,6 +106,10 @@ func (s *Server) Routes() *router.Router {
 
 	// frontend
 	r.ServeFile("/", "./public/index.html")
+	r.ServeFile("/bundle.js", "./public/bundle.js")
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		http.ServeFile(w, req, "./public/index.html")
+	})
 	return r
 }
 
