@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultPubsubAddr = "localhost:8080"
+	defaultPubsubAddr = "localhost:9000"
 	defaultPort       = 8080
 )
 
