@@ -22,14 +22,10 @@ export default class Login extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    console.log(
-      'From Login: ' + this.state.inputId + ', ' + this.state.inputPass,
-    );
     this.props.auth(this.state.inputId, this.state.inputPass);
   }
 
   render() {
-    console.log(this.props);
     return (
       <div className="login">
         Hello Login

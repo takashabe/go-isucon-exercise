@@ -1,5 +1,6 @@
 import React from 'react';
 import {BrowserRouter, Route, Link, Redirect} from 'react-router-dom';
+import axios from 'axios';
 
 import Login from './login.js';
 import Dashboard from './dashboard.js';
@@ -9,28 +10,54 @@ export default class Routes extends React.Component {
   constructor() {
     super();
 
-    const sess = sessionStorage.getItem('portal-session');
     this.state = {
-      sessionId: sess,
+      authed: sessionStorage.getItem('authed_session') !== null,
     };
-
     this.isAuthentication = this.isAuthentication.bind(this);
     this.authenticate = this.authenticate.bind(this);
+    this.updateAuthentication = this.updateAuthentication.bind(this);
   }
 
   isAuthentication() {
-    return this.state.sessionId !== null;
+    if (this.state.authed === false) {
+      return false;
+    }
+
+    // expire session
+    axios.get('/api/team', {withCredentials: true}).catch(e => {
+      if (e.status === 401) {
+        this.updateAuthentication(false);
+      }
+    });
+    return this.state.authed;
+  }
+
+  updateAuthentication(isAuth) {
+    if (isAuth) {
+      sessionStorage.setItem('authed_session', true);
+    } else {
+      sessionStorage.removeItem('authed_session');
+    }
+    this.setState({
+      authed: isAuth,
+    });
   }
 
   authenticate(id, password) {
-    console.log('From Auth: ID=' + id + ', Pass=' + password);
-    // dummy
-    const sessionId = id;
+    let params = new URLSearchParams();
+    params.append('email', id);
+    params.append('password', password);
 
-    sessionStorage.setItem('portal-session', sessionId);
-    this.setState({
-      sessionId: sessionId,
-    });
+    axios
+      .post('/api/login', params, {withCredentials: true})
+      .then(res => {
+        console.log(res.status + ': ' + JSON.stringify(res.data));
+        this.updateAuthentication(true);
+      })
+      .catch(e => {
+        console.log(e.response.status + ': ' + JSON.stringify(e.response.data));
+        this.updateAuthentication(false);
+      });
   }
 
   render() {
