@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strings"
 )
 
 const (
@@ -41,7 +42,8 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeParseError
 	}
 
-	server, err := NewServer(param.pubsubAddr)
+	addr := complementURL(param.pubsubAddr)
+	server, err := NewServer(addr)
 	if err != nil {
 		fmt.Fprintf(c.ErrStream, "invalid args. failed to initialize server: %#v", err)
 		return ExitCodeInvalidArgsError
@@ -63,4 +65,11 @@ func (c *CLI) parseArgs(args []string, p *param) error {
 	flags.StringVar(&p.pubsubAddr, "pubsub", defaultPubsubAddr, "")
 
 	return flags.Parse(args)
+}
+
+func complementURL(addr string) string {
+	if strings.HasPrefix(addr, "http") {
+		return addr
+	}
+	return "http://" + addr
 }
