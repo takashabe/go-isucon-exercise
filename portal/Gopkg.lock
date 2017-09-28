@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/takashabe/go-message-queue"
   packages = ["client","datastore","models","server","stats"]
-  revision = "3cdafd744de29cab0d8f2d2aacded3025ff8da6c"
+  revision = "934614a051cb0330e40bfc20ecf1bea32325d214"
 
 [[projects]]
   branch = "master"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "429f518978ab01db8bb6f44b66785088e7fba58b"
+  revision = "314a259e304ff91bd6985da2a7149bbf91237993"
 
 [[projects]]
   branch = "v2"
