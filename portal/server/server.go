@@ -5,11 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/takashabe/go-router"
 	session "github.com/takashabe/go-session"
 	_ "github.com/takashabe/go-session/memory" // session driver
 )
+
+// printDebugf behaves like log.Printf only in the debug env
+func printDebugf(format string, args ...interface{}) {
+	if env := os.Getenv("GO_PORTAL_DEBUG"); len(env) != 0 {
+		log.Printf("[DEBUG] "+format+"\n", args...)
+	}
+}
 
 // ErrorResponse is Error response template
 type ErrorResponse struct {
@@ -18,7 +26,7 @@ type ErrorResponse struct {
 }
 
 func (e *ErrorResponse) String() string {
-	return fmt.Sprintf("reason: %s, error: %v", e.Message, e.Error)
+	return fmt.Sprintf("reason: %s, error: %s", e.Message, e.Error.Error())
 }
 
 // Respond is response write to ResponseWriter
@@ -59,6 +67,7 @@ func Error(w http.ResponseWriter, code int, err error, msg string) {
 		Message: msg,
 		Error:   err,
 	}
+	printDebugf("%s", e.String())
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	Respond(w, code, e)
 }

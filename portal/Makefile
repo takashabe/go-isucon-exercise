@@ -9,6 +9,9 @@ build: cmd/portal/main.go
 start:
 	cd cmd/portal && ./portal
 
+debug:
+	export GO_PORTAL_DEBUG=1 && cd cmd/portal && ./portal
+
 test:
 	$(SHOW_ENV)
 	go test -v $(SUBPACKAGES)
