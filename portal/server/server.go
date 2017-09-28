@@ -115,6 +115,6 @@ func (s *Server) Routes() *router.Router {
 
 // Run start server
 func (s *Server) Run(port int) error {
-	log.Println("starting server...")
+	log.Printf("Portal server running at http://localhost:%d/", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), s.Routes())
 }
