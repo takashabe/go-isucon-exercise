@@ -47,3 +47,12 @@ func (t *Team) Get(id int) (*Team, error) {
 	}
 	return t, err
 }
+
+// Register register new team to the datastore
+func (t *Team) Register(id int, name, email, password, instance string) error {
+	d, err := NewDatastore()
+	if err != nil {
+		return err
+	}
+	return d.saveTeams(id, name, email, password, instance)
+}
