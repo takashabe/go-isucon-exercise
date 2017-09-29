@@ -24,6 +24,8 @@ func NewDatastore() (*Datastore, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+	db.SetMaxIdleConns(32)
+	db.SetMaxOpenConns(32)
 
 	return &Datastore{Conn: db}, nil
 }
