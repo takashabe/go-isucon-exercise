@@ -1,6 +1,9 @@
 package models
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 const tooSlowResponseMessage = "ミリ秒以内に応答しませんでした"
 
@@ -29,10 +32,11 @@ func calculateScore(raw BenchmarkResult) (summary string, score int) {
 
 // Score represent benchmark score
 type Score struct {
-	ID      int    `json:"id"`
-	Summary string `json:"summary"`
-	Score   int    `json:"score"`
-	Detail  string `json:"detail"`
+	ID          int       `json:"id"`
+	Summary     string    `json:"summary"`
+	Score       int       `json:"score"`
+	Detail      string    `json:"detail"`
+	SubmittedAt time.Time `json:"submitted_at"`
 }
 
 // NewScore returns initialized Score
@@ -51,7 +55,7 @@ func (s *Score) Get(scoreID, teamID int) (*Score, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = row.Scan(&s.ID, &s.Summary, &s.Score, &s.Detail)
+	err = row.Scan(&s.ID, &s.Summary, &s.Score, &s.Detail, &s.SubmittedAt)
 	return s, err
 }
 
@@ -70,7 +74,7 @@ func (s *Score) History(teamID int) ([]*Score, error) {
 	history := []*Score{}
 	for rows.Next() {
 		score := &Score{}
-		err := rows.Scan(&score.ID, &score.Summary, &score.Score, &score.Detail)
+		err := rows.Scan(&score.ID, &score.Summary, &score.Score, &score.SubmittedAt)
 		if err != nil {
 			return nil, err
 		}

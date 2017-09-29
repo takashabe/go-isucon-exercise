@@ -132,10 +132,9 @@ func (d *Datastore) saveScoreAndUpdateQueue(q QueueResponse) error {
 }
 
 func (d *Datastore) findScoreByIDAndTeamID(scoreID, teamID int) (*sql.Row, error) {
-	return d.queryRow("select id, summary, score, json from scores where id=? and team_id=?",
-		scoreID, teamID)
+	return d.queryRow("select id, summary, score, json, submitted_at from scores where id=? and team_id=?", scoreID, teamID)
 }
 
 func (d *Datastore) findScoreHistoryByIDAndTeamID(teamID int) (*sql.Rows, error) {
-	return d.query("select id, summary, score, json from scores where team_id=? order by submitted_at DESC", teamID)
+	return d.query("select id, summary, score, submitted_at from scores where team_id=? order by submitted_at DESC", teamID)
 }
