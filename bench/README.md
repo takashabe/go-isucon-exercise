@@ -5,7 +5,7 @@
 ```
 bench/
   benchmark/  # CLI benchmark script
-  server/     # call benchmark HTTP server
+  agent/      # Communication with pubsub server and frontend on the benchmarker
 ```
 
 ## benchmark
@@ -71,14 +71,19 @@ when failed benchmark:
 }
 ```
 
-## server
+## agent
 
-listen and serve benchmark queue request.
+Polling for the benchmark request queues, and dispatch a request to the benchmarker. The result benchmark send queue when finished benchmark.
 
-run benchmark request URL:
+Send response queue message:
 
 ```
-/api/benchmark/:entry_id
+Data: {
+  // Benchmark result
+}
+Attributes: {
+  "source_msg_id": // Request message queue ID,
+  "team_id":       // Team ID from the request message queue,
+  "created_at":    // Benchmark finished time,
+},
 ```
-
-client need enqueue at `:entry_id` before request. server receive request, dequeue entry_id resource and update queue.
