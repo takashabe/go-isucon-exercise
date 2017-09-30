@@ -1,8 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"strings"
-	"time"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 const tooSlowResponseMessage = "ミリ秒以内に応答しませんでした"
@@ -36,7 +38,18 @@ type Score struct {
 	Summary     string    `json:"summary"`
 	Score       int       `json:"score"`
 	Detail      string    `json:"detail"`
-	SubmittedAt time.Time `json:"submitted_at"`
+	SubmittedAt timeStamp `json:"submitted_at"`
+}
+
+type timeStamp struct {
+	mysql.NullTime
+}
+
+func (t *timeStamp) MarshalJSON() ([]byte, error) {
+	ts := t.Time.Unix()
+	stamp := fmt.Sprint(ts)
+
+	return []byte(stamp), nil
 }
 
 // NewScore returns initialized Score
