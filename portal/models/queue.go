@@ -94,6 +94,8 @@ func (q *Queue) Publish(ctx context.Context, teamID int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer d.Close()
+
 	exist, err := q.isExistQueue(d, teamID)
 	if err != nil {
 		return "", err
@@ -216,6 +218,8 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		}
 		return err
 	}
+	defer d.Close()
+
 	err = d.saveScoreAndUpdateQueue(response)
 	if err != nil {
 		if nerr := sub.Nack(ctx, []string{ackID}); nerr != nil {
@@ -239,6 +243,7 @@ func (q *Queue) CurrentQueues(ctx context.Context, teamID int) ([]CurrentQueue, 
 	if err != nil {
 		return nil, err
 	}
+	defer d.Close()
 
 	sub := q.c.Subscription(pubsubPortal)
 	raw, err := sub.StatsDetail(ctx)

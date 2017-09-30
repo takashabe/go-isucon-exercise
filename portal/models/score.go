@@ -63,6 +63,7 @@ func (s *Score) Get(scoreID, teamID int) (*Score, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer d.Close()
 
 	row, err := d.findScoreByIDAndTeamID(scoreID, teamID)
 	if err != nil {
@@ -78,6 +79,7 @@ func (s *Score) History(teamID int) ([]*Score, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer d.Close()
 
 	rows, err := d.findScoreHistoryByIDAndTeamID(teamID)
 	if err != nil {

@@ -18,6 +18,7 @@ func (t *Team) Authentication(email, password string) (*Team, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer d.Close()
 
 	row, err := d.findTeamByEmailAndPassword(email, password)
 	if err != nil {
@@ -36,6 +37,7 @@ func (t *Team) Get(id int) (*Team, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer d.Close()
 
 	row, err := d.findTeamByID(id)
 	if err != nil {
@@ -54,5 +56,7 @@ func (t *Team) Register(id int, name, email, password, instance string) error {
 	if err != nil {
 		return err
 	}
+	defer d.Close()
+
 	return d.saveTeams(id, name, email, password, instance)
 }

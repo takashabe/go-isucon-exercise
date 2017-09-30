@@ -30,6 +30,11 @@ func NewDatastore() (*Datastore, error) {
 	return &Datastore{Conn: db}, nil
 }
 
+// Close calls DB.Close
+func (d *Datastore) Close() error {
+	return d.Conn.Close()
+}
+
 func (d *Datastore) query(q string, args ...interface{}) (*sql.Rows, error) {
 	stmt, err := d.Conn.Prepare(q)
 	if err != nil {
