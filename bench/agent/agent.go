@@ -95,29 +95,29 @@ func (a *Agent) Run() error {
 	return nil
 }
 
-type receiveMessage struct {
-	message *client.Message
-	err     error
-}
-
 // Polling trying pull until receive the message
 func (a *Agent) Polling(ctx context.Context) (*client.Message, error) {
+	type receiveMessage struct {
+		message *client.Message
+		err     error
+	}
+
 	rmCh := make(chan receiveMessage)
-	go func() {
+	go func(ch chan receiveMessage) {
 		sub := a.pubsub.Subscription(a.pullServer)
 		var rm receiveMessage
 		for {
 			err := sub.Receive(ctx, func(ctx context.Context, msg *client.Message) {
 				rm.message = msg
-				rmCh <- rm
+				ch <- rm
 			})
 			if err != nil && err != client.ErrNotFoundMessage {
 				rm.err = err
-				rmCh <- rm
+				ch <- rm
 			}
 			time.Sleep(a.interval)
 		}
-	}()
+	}(rmCh)
 
 	select {
 	case <-ctx.Done():
