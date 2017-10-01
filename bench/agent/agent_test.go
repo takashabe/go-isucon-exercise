@@ -114,7 +114,7 @@ func TestPolling(t *testing.T) {
 	defer ts.Close()
 
 	id := publishDummyBenchmarkRequest(t, ts)
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", "localhost", 80)
 	if err != nil {
@@ -136,10 +136,10 @@ func TestPolling(t *testing.T) {
 	// expect not found message
 	go func() {
 		_, err = agent.Polling(ctx)
-		if err != nil {
-			t.Fatalf("want non error, got %v", err)
+		if err != context.Canceled {
+			t.Errorf("want error %v, got %v", context.Canceled, err)
 		}
 	}()
-	time.Sleep(50 * time.Millisecond)
-	ctx.Done()
+	time.Sleep(40 * time.Millisecond)
+	cancel()
 }
