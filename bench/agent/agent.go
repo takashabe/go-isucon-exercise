@@ -2,10 +2,11 @@ package agent
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/client"
 )
@@ -124,5 +125,28 @@ func (a *Agent) Polling(ctx context.Context) (*client.Message, error) {
 		return nil, ctx.Err()
 	case rm := <-rmCh:
 		return rm.message, rm.err
+	}
+}
+
+// Dispatch dispatch benchmark request.
+// Returns result from the benchmark script.
+func (a *Agent) Dispatch(ctx context.Context) ([]byte, error) {
+	type dispatchResponse struct {
+		data []byte
+		err  error
+	}
+
+	drCh := make(chan dispatchResponse)
+	go func(ch chan dispatchResponse) {
+		opt := fmt.Sprintf("-host=%s -file=%s", a.dispatch.host, a.dispatch.paramFile)
+		res, err := exec.Command(a.dispatch.script, opt).Output()
+		ch <- dispatchResponse{data: res, err: err}
+	}(drCh)
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case dr := <-drCh:
+		return dr.data, dr.err
 	}
 }

@@ -1,1 +1,17 @@
-dummy
+#!/bin/sh
+
+cat <<EOT
+{
+        "valid": true,
+        "request_count": 3651,
+        "elapsed_time": 0,
+        "response": {
+                "success": 1452,
+                "redirect": 2199,
+                "client_error": 0,
+                "server_error": 0,
+                "exception": 0
+        },
+        "violations": []
+}
+EOT

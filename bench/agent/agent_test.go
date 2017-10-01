@@ -143,3 +143,32 @@ func TestPolling(t *testing.T) {
 	time.Sleep(40 * time.Millisecond)
 	cancel()
 }
+
+func TestDispatch(t *testing.T) {
+	ts := setupPubsubServer(t)
+	defer ts.Close()
+
+	d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", "localhost", 80)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	agent, err := NewAgent(0, ts.URL, d)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	data, err := agent.Dispatch(ctx)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	agent.dispatch.script = "./testdata/sleepScript"
+	go func() {
+		_, err := agent.Dispatch(ctx)
+		if err != context.Canceled {
+			t.Errorf("want error %v, got %v", context.Canceled, err)
+		}
+	}()
+	cancel()
+}
