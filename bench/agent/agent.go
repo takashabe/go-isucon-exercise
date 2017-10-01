@@ -29,6 +29,7 @@ type Agent struct {
 type Dispatch struct {
 	script    string
 	paramFile string
+	host      string
 	port      int
 }
 
@@ -58,7 +59,7 @@ func NewAgent(interval int, pubsub string, dispatch *Dispatch) (*Agent, error) {
 }
 
 // NewDispatch returns initialized Dispatch
-func NewDispatch(script, param string, port int) (*Dispatch, error) {
+func NewDispatch(script, param, host string, port int) (*Dispatch, error) {
 	if !isExistFile(script) {
 		return nil, errors.New("Not found script file path")
 	}
@@ -69,6 +70,7 @@ func NewDispatch(script, param string, port int) (*Dispatch, error) {
 	return &Dispatch{
 		script:    script,
 		paramFile: param,
+		host:      host,
 		port:      port,
 	}, nil
 }

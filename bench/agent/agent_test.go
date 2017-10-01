@@ -98,7 +98,7 @@ func TestNewAgent(t *testing.T) {
 		{0, "invalidURL", &url.Error{}},
 	}
 	for i, c := range cases {
-		d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", 80)
+		d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", "localhost", 80)
 		if err != nil {
 			t.Fatalf("#%d: want non error, got %v", i, err)
 		}
@@ -116,7 +116,7 @@ func TestPolling(t *testing.T) {
 	id := publishDummyBenchmarkRequest(t, ts)
 	ctx := context.Background()
 
-	d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", 80)
+	d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", "localhost", 80)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
