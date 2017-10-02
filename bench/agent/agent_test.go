@@ -158,7 +158,7 @@ func TestDispatch(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	data, err := agent.Dispatch(ctx)
+	_, err = agent.Dispatch(ctx)
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
