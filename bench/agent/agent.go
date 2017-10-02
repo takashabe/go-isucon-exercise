@@ -150,3 +150,13 @@ func (a *Agent) Dispatch(ctx context.Context) ([]byte, error) {
 		return dr.data, dr.err
 	}
 }
+
+// SendResult benchmark result send to pubsub server
+func (a *Agent) SendResult(ctx context.Context, data []byte, attr map[string]string) error {
+	res := a.pubsub.Topic(a.publishServer).Publish(ctx, &client.Message{
+		Data:       data,
+		Attributes: attr,
+	})
+	_, err := res.Get(ctx)
+	return err
+}

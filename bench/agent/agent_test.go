@@ -172,3 +172,23 @@ func TestDispatch(t *testing.T) {
 	}()
 	cancel()
 }
+
+func TestSendResult(t *testing.T) {
+	ts := setupPubsubServer(t)
+	defer ts.Close()
+
+	d, err := NewDispatch("./testdata/dummyScript", "./testdata/dummyParam", "localhost", 80)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	agent, err := NewAgent(0, ts.URL, d)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	ctx := context.Background()
+	err = agent.SendResult(ctx, []byte("dummy"), map[string]string{"dummy": "dummy"})
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+}
