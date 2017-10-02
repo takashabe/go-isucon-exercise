@@ -73,6 +73,25 @@ when failed benchmark:
 
 ## agent
 
+run command `agent`. if your will build `make build`.
+
+options:
+
+* interval - polling queues interval
+* pubsub - pubsub server URL
+* benchmark - benchmark script file path
+* param - parameters file path for the benchmark script
+* host - webapp hostname
+* port - webapp running port
+
+example run command:
+
+```
+agent -pubsub=http://localhost:9000 -benchmark=./bin/app -param=./param.json -host=localhost -port=8080
+```
+
+### Queue
+
 Polling for the benchmark request queues, and dispatch a request to the benchmarker. The result benchmark send queue when finished benchmark.
 
 Send response queue message:

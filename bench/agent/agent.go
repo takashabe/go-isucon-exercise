@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -12,7 +13,6 @@ import (
 )
 
 const (
-	defaultInterval   = 5
 	pullServerName    = "portal"
 	publishServerName = "benchmark"
 )
@@ -85,15 +85,33 @@ func isExistFile(path string) bool {
 }
 
 // Run exec polling and dispatch queues
-func (a *Agent) Run() error {
-	ctx := context.Background()
-	msg, err := a.Polling(ctx)
-	if err != nil {
-		return err
-	}
-	pp.Println(msg)
+func (a *Agent) Run() {
+	for {
+		ctx := context.Background()
+		msg, err := a.Polling(ctx)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+		err = a.pubsub.Subscription(a.pullServer).Ack(ctx, []string{msg.AckID})
+		if err != nil {
+			log.Println(err.Error())
+		}
 
-	return nil
+		data, err := a.Dispatch(ctx)
+		if err != nil {
+			log.Println(err.Error())
+		}
+
+		err = a.SendResult(ctx, data, map[string]string{
+			"source_msg_id": msg.ID,
+			"team_id":       msg.Attributes["team_id"],
+			"created_at":    string(time.Now().Unix()),
+		})
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}
 }
 
 // Polling trying pull until receive the message
