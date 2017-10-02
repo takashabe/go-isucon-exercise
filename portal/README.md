@@ -20,10 +20,10 @@ Send to benchmark:
 
 Receive from benchmark:
 
-| Message                     |                                                         |
-| ---                         | ---                                                     |
-| Data []byte                 | directly json from the benchmark                        |
-| Attribute map[string]string | "team_id": TEAM_ID,<br>"cretaed_at": CREATE_TIME        |
+| Message                     |                                                                                                      |
+| ---                         | ---                                                                                                  |
+| Data []byte                 | directly json from the benchmark                                                                     |
+| Attribute map[string]string | "team_id": TEAM_ID,<br>"source_message_id": Message_ID by request queue<br>"cretaed_at": CREATE_TIME |
 
 #### Queue flow
 
