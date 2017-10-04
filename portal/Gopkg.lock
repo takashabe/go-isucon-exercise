@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/takashabe/go-message-queue"
   packages = ["client","datastore","models","server","stats"]
-  revision = "934614a051cb0330e40bfc20ecf1bea32325d214"
+  revision = "d3d353190270ec364c907789caba7f7bca14a87a"
 
 [[projects]]
   branch = "master"
@@ -88,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f21c9ebdd982a3fa84f8a0d409b616624a7464d534bd5afdd4e792dc23d2bdfe"
+  inputs-digest = "e0f80a760bf74c854e56cb83bed817e54ada60474f1ba1df1908578aaa7f043b"
   solver-name = "gps-cdcl"
   solver-version = 1
