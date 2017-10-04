@@ -86,6 +86,7 @@ func isExistFile(path string) bool {
 
 // Run exec polling and dispatch queues
 func (a *Agent) Run() {
+	log.Println("Running agent...")
 	for {
 		ctx := context.Background()
 		msg, err := a.Polling(ctx)
@@ -93,15 +94,18 @@ func (a *Agent) Run() {
 			log.Println(err.Error())
 			continue
 		}
+		log.Printf("Received message: %s, %s\n", msg.Attributes["team_id"], msg.ID)
 		err = a.pubsub.Subscription(a.pullServer).Ack(ctx, []string{msg.AckID})
 		if err != nil {
 			log.Println(err.Error())
 		}
 
+		log.Println("Running benchmark...")
 		data, err := a.Dispatch(ctx)
 		if err != nil {
 			log.Println(err.Error())
 		}
+		log.Printf("Finished benchmark: %s\n", data)
 
 		err = a.SendResult(ctx, data, map[string]string{
 			"source_msg_id": msg.ID,
