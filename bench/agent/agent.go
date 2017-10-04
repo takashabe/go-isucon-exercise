@@ -156,8 +156,14 @@ func (a *Agent) Dispatch(ctx context.Context) ([]byte, error) {
 
 	drCh := make(chan dispatchResponse)
 	go func(ch chan dispatchResponse) {
-		opt := fmt.Sprintf("-host=%s -file=%s", a.dispatch.host, a.dispatch.paramFile)
-		res, err := exec.Command(a.dispatch.script, opt).Output()
+		opts := make([]string, 0)
+		opts = append(opts, "-host="+a.dispatch.host)
+		opts = append(opts, "-file="+a.dispatch.paramFile)
+		opts = append(opts, fmt.Sprintf("-port=%d", a.dispatch.port))
+		cmd := exec.Command(a.dispatch.script, opts...)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		res, err := cmd.Output()
 		ch <- dispatchResponse{data: res, err: err}
 	}(drCh)
 
