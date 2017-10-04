@@ -124,15 +124,23 @@ func (a *Agent) Polling(ctx context.Context) (*client.Message, error) {
 	rmCh := make(chan receiveMessage)
 	go func(ch chan receiveMessage) {
 		sub := a.pubsub.Subscription(a.pullServer)
-		var rm receiveMessage
+		var (
+			rm       receiveMessage
+			isFinish bool
+		)
 		for {
 			err := sub.Receive(ctx, func(ctx context.Context, msg *client.Message) {
 				rm.message = msg
 				ch <- rm
+				isFinish = true
 			})
 			if err != nil && err != client.ErrNotFoundMessage {
 				rm.err = err
 				ch <- rm
+				isFinish = true
+			}
+			if isFinish {
+				return
 			}
 			time.Sleep(a.interval)
 		}
