@@ -200,6 +200,9 @@ func (q *Queue) PullAndSave(ctx context.Context) error {
 		response.SourceMessageID = msgID
 	})
 	if err != nil {
+		if err == client.ErrNotFoundMessage {
+			return nil
+		}
 		return err
 	}
 

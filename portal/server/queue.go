@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/takashabe/go-isucon-exercise/portal/models"
 )
@@ -53,4 +55,31 @@ func (s *Server) Enqueue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	JSON(w, http.StatusOK, "")
+}
+
+var runPolling = false
+
+// Polling call pull API from the result pubsub
+func (s *Server) Polling() error {
+	if runPolling {
+		return nil
+	}
+	q, err := models.NewQueue(s.pubsubAddr)
+	if err != nil {
+		return err
+	}
+
+	runPolling = true
+	go func() {
+		for {
+			ctx := context.Background()
+			err = q.PullAndSave(ctx)
+			if err != nil {
+				log.Println(err)
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}()
+
+	return nil
 }
