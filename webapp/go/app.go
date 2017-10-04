@@ -504,14 +504,18 @@ func postFollow(w http.ResponseWriter, r *http.Request, id int) {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(user.ID, id)
-	checkErr(errors.Wrap(err, "failed to exec insert tweet"))
+	checkErr(errors.Wrap(err, "failed to exec insert follow"))
 
 	http.Redirect(w, r, "/", 302)
 }
 
 func getInitialize(w http.ResponseWriter, r *http.Request) {
 	// impossible to deploy a single binary
-	_, err := exec.Command(os.Getenv("SHELL"), "-c", "data/tools/init.sh").Output()
+	_, err := exec.Command(os.Getenv("SHELL"), "-c", "../tools/init.sh").Output()
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to initialize"))
+	}
+	_, err = exec.Command(os.Getenv("SHELL"), "-c", "../tools/index.sh").Output()
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to initialize"))
 	}
