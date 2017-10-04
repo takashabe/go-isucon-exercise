@@ -106,7 +106,7 @@ func (a *Agent) Run() {
 		err = a.SendResult(ctx, data, map[string]string{
 			"source_msg_id": msg.ID,
 			"team_id":       msg.Attributes["team_id"],
-			"created_at":    string(time.Now().Unix()),
+			"created_at":    fmt.Sprintf("%d", time.Now().Unix()),
 		})
 		if err != nil {
 			log.Println(err.Error())
