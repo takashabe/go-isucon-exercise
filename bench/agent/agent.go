@@ -14,7 +14,7 @@ import (
 
 const (
 	pullServerName    = "portal"
-	publishServerName = "benchmark"
+	publishServerName = "result"
 )
 
 // Agent represent agent configuration
@@ -54,8 +54,8 @@ func NewAgent(interval int, pubsub string, dispatch *Dispatch) (*Agent, error) {
 		interval:      time.Duration(interval) * time.Second,
 		pubsub:        client,
 		dispatch:      dispatch,
-		pullServer:    "portal",
-		publishServer: "benchmark",
+		pullServer:    pullServerName,
+		publishServer: publishServerName,
 	}, nil
 }
 
