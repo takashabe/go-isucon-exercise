@@ -123,7 +123,7 @@ func (t *LoadCheckerTask) run(ctx Ctx, d *Driver) {
 			return
 		}
 
-		d.getAndCheck(s1, "following", "FOLLOWING LIST AFTER MAKING FOLLOW", func(c *Checker) {
+		d.getAndCheck(s1, "/following", "FOLLOWING LIST AFTER MAKING FOLLOW", func(c *Checker) {
 			c.isStatusCode(200)
 			c.contentFunc(
 				fmt.Sprintf("#following dl dd.follow-follow a[href='%s']", followPath),
