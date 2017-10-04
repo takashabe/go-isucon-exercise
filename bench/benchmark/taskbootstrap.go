@@ -196,7 +196,7 @@ func (t *BootstrapTask) existFollower(s, dst *Session) {
 			"#followers.row.panel.panel-primary dl dd.follow-follow",
 			"フォローされているユーザが含まれていません",
 			func(se *goquery.Selection) bool {
-				return se.Text() == s.param.Name
+				return se.Text() == dst.param.Name
 			})
 	})
 }
