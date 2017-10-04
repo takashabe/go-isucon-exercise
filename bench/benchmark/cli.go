@@ -13,7 +13,7 @@ import (
 const (
 	defaultHost  = "localhost"
 	defaultPort  = 80
-	defaultFile  = "testdata/param.json"
+	defaultFile  = "data/param.json"
 	defaultAgent = "isucon_go"
 )
 
