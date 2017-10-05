@@ -50,6 +50,11 @@ func (d *Driver) getAndContent(sess *Session, path, selector string, i int, f fu
 	return content
 }
 
+var tr = &http.Transport{
+	MaxIdleConns:        10,
+	MaxIdleConnsPerHost: 10,
+}
+
 func (d *Driver) getAndCheck(sess *Session, path, requestName string, check func(c *Checker)) {
 	req, err := http.NewRequest("GET", d.ctx.uri(path), nil)
 	if err != nil {
@@ -58,6 +63,7 @@ func (d *Driver) getAndCheck(sess *Session, path, requestName string, check func
 	}
 
 	client := &http.Client{
+		Transport: tr,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -81,6 +87,7 @@ func (d *Driver) postAndCheck(sess *Session, path string, params url.Values, req
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{
+		Transport: tr,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
