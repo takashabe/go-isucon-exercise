@@ -85,15 +85,26 @@ func isExistFile(path string) bool {
 }
 
 // Run exec polling and dispatch queues
-func (a *Agent) Run() {
+func (a *Agent) Run() error {
 	log.Println("Running agent...")
+	var (
+		pollingErrCount = 0
+		pollingAbandon  = 20
+	)
 	for {
 		ctx := context.Background()
 		msg, err := a.Polling(ctx)
 		if err != nil {
 			log.Println(err.Error())
+			if pollingErrCount > pollingAbandon {
+				return errors.New("too many errors")
+			}
+
+			pollingErrCount++
 			continue
 		}
+
+		pollingErrCount = 0
 		log.Printf("Received message: %s, %s\n", msg.Attributes["team_id"], msg.ID)
 		err = a.pubsub.Subscription(a.pullServer).Ack(ctx, []string{msg.AckID})
 		if err != nil {
@@ -173,8 +184,7 @@ func (a *Agent) Dispatch(ctx context.Context) ([]byte, error) {
 		opts = append(opts, "-file="+a.dispatch.paramFile)
 		opts = append(opts, fmt.Sprintf("-port=%d", a.dispatch.port))
 		cmd := exec.Command(a.dispatch.script, opts...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stdout
 		res, err := cmd.Output()
 		ch <- dispatchResponse{data: res, err: err}
 	}(drCh)
