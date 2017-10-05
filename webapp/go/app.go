@@ -20,8 +20,7 @@ var (
 	ErrUnregisteredUser = errors.New("unregistered user")
 	ErrAuthentication   = errors.New("failed authentication")
 
-	sess   *session.Manager
-	helper ServerHelper
+	sess *session.Manager
 )
 
 // DB table mapping
@@ -83,29 +82,23 @@ type Following struct {
 	CreatedAt time.Time
 }
 
-type ServerHelper interface {
-	NewDB() (*sql.DB, error)
-}
+var gdb *sql.DB
 
-type IsuconServer struct {
-	db *sql.DB
-}
-
-func (s *IsuconServer) NewDB() (*sql.DB, error) {
-	// TODO: DB cache
+func setup() {
 	db, err := sql.Open("mysql", "isucon@/isucon?parseTime=true")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open database")
+		panic(err)
 	}
-	return db, nil
+	if err := db.Ping(); err != nil {
+		panic(err)
+	}
+	db.SetMaxOpenConns(32)
+	db.SetMaxIdleConns(32)
+	gdb = db
 }
 
 func getDB() *sql.DB {
-	db, err := helper.NewDB()
-	if err != nil {
-		panic(err.Error())
-	}
-	return db
+	return gdb
 }
 
 func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) {
@@ -132,7 +125,6 @@ func getCurrentUser(w http.ResponseWriter, r *http.Request) (*UserModel, error) 
 
 func getUser(id int) (UserModel, error) {
 	db := getDB()
-	defer db.Close()
 
 	user := UserModel{}
 	stmt, err := db.Prepare("select id, name, email from user where id=?")
@@ -153,7 +145,6 @@ func authenticate(email, password string) (UserModel, error) {
 	user := UserModel{}
 
 	db := getDB()
-	defer db.Close()
 
 	stmt, err := db.Prepare("select id from user where email=? and passhash=sha2(concat(salt, ?), 256)")
 	if err != nil {
@@ -189,7 +180,6 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 	tweets := []*Tweet{}
 
 	db := getDB()
-	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT id, user_id, content, created_at " +
 		"FROM tweet " +
@@ -311,7 +301,6 @@ func postTweet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := getDB()
-	defer db.Close()
 
 	stmt, err := db.Prepare("INSERT INTO tweet (user_id, content) VALUES (?,?)")
 	defer stmt.Close()
@@ -334,7 +323,6 @@ func userHandler(w http.ResponseWriter, r *http.Request, userID int) {
 	content := UserContent{Myself: myself}
 
 	db := getDB()
-	defer db.Close()
 
 	stmt, err := db.Prepare("SELECT t.id,  t.user_id,  u.name,  t.content,  t.created_at " +
 		"FROM tweet as t JOIN user as u " +
@@ -384,7 +372,6 @@ func followable(srcID int, dstID int) bool {
 	}
 
 	db := getDB()
-	defer db.Close()
 	stmt, err := db.Prepare("select count(*) from follow where user_id=? and follow_id=?")
 	if err != nil {
 		return false
@@ -408,7 +395,6 @@ func getFollowing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := getDB()
-	defer db.Close()
 
 	followingStmt, err := db.Prepare("SELECT user_id, follow_id, created_at FROM follow WHERE user_id = ?")
 	defer followingStmt.Close()
@@ -416,6 +402,7 @@ func getFollowing(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := followingStmt.Query(user.ID)
 	checkErr(errors.Wrap(err, "failed to select following query"))
+	defer rows.Close()
 
 	fc := FollowingContent{
 		FollowingList: make([]*Following, 0),
@@ -450,7 +437,6 @@ func getFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := getDB()
-	defer db.Close()
 	stmt, err := db.Prepare("SELECT id, name, created_at " +
 		"FROM user WHERE id IN (SELECT user_id FROM follow WHERE follow_id=?)")
 	if err != nil {
@@ -522,14 +508,8 @@ func getInitialize(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	s := &IsuconServer{}
-	db, err := s.NewDB()
-	if err != nil {
-		panic(err.Error())
-	}
-	s.db = db
-	defer db.Close()
-	helper = s
+	setup()
+	defer gdb.Close()
 
 	r := router.NewRouter()
 	r.Get("/", getIndex)
