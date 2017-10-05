@@ -67,7 +67,11 @@ func (c *CLI) Run(args []string) int {
 		return ExitCodeInvalidArgsError
 	}
 
-	agent.Run()
+	err = agent.Run()
+	if err != nil {
+		fmt.Fprintf(c.ErrStream, "failed to running agent: %v", err)
+		return ExitCodeError
+	}
 	return ExitCodeOK
 }
 
