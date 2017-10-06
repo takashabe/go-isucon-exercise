@@ -480,7 +480,6 @@ func postFollow(w http.ResponseWriter, r *http.Request, id int) {
 	}
 
 	db := getDB()
-	defer db.Close()
 	stmt, err := db.Prepare("INSERT INTO follow (user_id, follow_id) VALUES (?, ?)")
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to prepared statement"))
