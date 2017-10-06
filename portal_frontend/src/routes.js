@@ -25,7 +25,7 @@ export default class Routes extends React.Component {
     // expire session
     axios.get('/api/team', {withCredentials: true}).catch(e => {
       if (e.response.status === 401) {
-        this.updateSession(false);
+        this.updateAuthSession(false);
       }
     });
     return this.state.authed;
