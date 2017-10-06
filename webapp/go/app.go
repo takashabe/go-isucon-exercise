@@ -9,6 +9,8 @@ import (
 	"text/template"
 	"time"
 
+	"golang.org/x/net/netutil"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-router"
@@ -528,7 +530,13 @@ func main() {
 
 	log.Println("running server...")
 	r.PrintRoutes(os.Stdout)
-	http.ListenAndServe(":8080", r)
+
+	l, err := net.Listen("tcp", ":8080")
+	if err != nil {
+		panic(err)
+	}
+	listener := netutil.LimitListener(l, 10)
+	log.Fatal(http.Serve(listener, r))
 }
 
 func init() {
