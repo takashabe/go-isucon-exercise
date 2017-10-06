@@ -14,8 +14,7 @@ export default class Routes extends React.Component {
       authed: sessionStorage.getItem('authed_session') !== null,
     };
     this.isAuthentication = this.isAuthentication.bind(this);
-    this.authenticate = this.authenticate.bind(this);
-    this.updateAuthentication = this.updateAuthentication.bind(this);
+    this.updateAuthSession = this.updateAuthSession.bind(this);
   }
 
   isAuthentication() {
@@ -26,13 +25,13 @@ export default class Routes extends React.Component {
     // expire session
     axios.get('/api/team', {withCredentials: true}).catch(e => {
       if (e.response.status === 401) {
-        this.updateAuthentication(false);
+        this.updateSession(false);
       }
     });
     return this.state.authed;
   }
 
-  updateAuthentication(isAuth) {
+  updateAuthSession(isAuth) {
     if (isAuth) {
       sessionStorage.setItem('authed_session', true);
     } else {
@@ -43,23 +42,6 @@ export default class Routes extends React.Component {
     });
   }
 
-  authenticate(id, password) {
-    let params = new URLSearchParams();
-    params.append('email', id);
-    params.append('password', password);
-
-    axios
-      .post('/api/login', params, {withCredentials: true})
-      .then(res => {
-        console.log(res.status + ': ' + JSON.stringify(res.data));
-        this.updateAuthentication(true);
-      })
-      .catch(e => {
-        console.log(e.response.status + ': ' + JSON.stringify(e.response.data));
-        this.updateAuthentication(false);
-      });
-  }
-
   render() {
     return (
       <BrowserRouter>
@@ -68,7 +50,7 @@ export default class Routes extends React.Component {
           <PropsRoute
             path="/login"
             component={Login}
-            auth={this.authenticate}
+            updateSession={this.updateAuthSession}
           />
           <PrivateRoute
             exact
