@@ -18,11 +18,12 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "webpack": "^3.6.0",
-    "webpack-dev-server": "^2.8.2"
+    "webpack-dev-server": "^2.9.1"
   },
   "dependencies": {
     "axios": "^0.16.2",
-    "material-ui": "^0.19.2",
+    "material-ui": "^1.0.0-beta.13",
+    "material-ui-icons": "^1.0.0-beta.15",
     "react": "^15.6.2",
     "react-dom": "^15.6.2",
     "react-router": "^4.2.0",
