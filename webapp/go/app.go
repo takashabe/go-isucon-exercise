@@ -2,10 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
+	"sync"
 	"text/template"
 	"time"
 
@@ -171,6 +175,68 @@ func authError(w http.ResponseWriter) {
 	}
 }
 
+var followerMap = followerMaper{v: make(map[int]int)}
+
+type followerMaper struct {
+	v map[int]int
+	sync.RWMutex
+}
+
+func (f *followerMaper) get(k int) (int, bool) {
+	f.RLock()
+	defer f.RUnlock()
+	num, ok := f.v[k]
+	return num, ok
+}
+
+func (f *followerMaper) set(k, v int) {
+	f.Lock()
+	f.v[k] = v
+	f.Unlock()
+}
+
+func (f *followerMaper) add(k int) {
+	f.Lock()
+	f.v[k]++
+	f.Unlock()
+}
+
+func getfollows(db *sql.DB, user *UserModel) (int, string) {
+	followStmt, err := db.Prepare("SELECT follow_id FROM follow WHERE user_id = ?")
+	checkErr(errors.Wrap(err, "failed to prepared statement"))
+	defer followStmt.Close()
+	followRow, err := followStmt.Query(user.ID)
+	checkErr(err)
+	defer followRow.Close()
+	follows := 0
+	inQuery := ""
+	for i := 0; followRow.Next(); i++ {
+		var followID int
+		err := followRow.Scan(&followID)
+		checkErr(err)
+		if inQuery == "" {
+			inQuery = fmt.Sprintf("%d", followID)
+		} else {
+			inQuery = fmt.Sprintf("%s, %d", inQuery, followID)
+		}
+		follows++
+	}
+	return follows, inQuery
+}
+
+func getfollowers(db *sql.DB, user *UserModel) int {
+	if num, ok := followerMap.get(user.ID); ok {
+		return num
+	}
+	followerStmt, err := db.Prepare("SELECT count(*) FROM follow WHERE follow_id = ?")
+	checkErr(errors.Wrap(err, "failed to prepared statement"))
+	defer followerStmt.Close()
+	var num int
+	followerStmt.QueryRow(user.ID).Scan(&num)
+	followerMap.set(user.ID, num)
+	return num
+}
+
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	user, err := getCurrentUser(w, r)
 	if err != nil {
@@ -183,43 +249,49 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	db := getDB()
 
-	stmt, err := db.Prepare("SELECT id, user_id, content, created_at " +
-		"FROM tweet " +
-		"WHERE USER_ID IN (SELECT follow_id FROM follow WHERE user_id=?) OR user_id = ? " +
-		"ORDER BY created_at DESC LIMIT 100")
-	if err != nil {
-		log.Println(errors.Wrap(err, "failed to prepared statement"))
-		http.NotFound(w, r)
-		return
-	}
-	defer stmt.Close()
+	follows, inQuery := getfollows(db, user)
+	content.Following = follows
 
-	rows, err := stmt.Query(user.ID, user.ID)
-	checkErr(errors.Wrap(err, "failed to query"))
-	defer rows.Close()
-	for i := 0; rows.Next(); i++ {
-		t := &Tweet{}
-		err := rows.Scan(&t.ID, &t.UserID, &t.Content, &t.CreatedAt)
-		checkErr(errors.Wrap(err, "failed to query scan"))
-		tweets = append(tweets, t)
+	content.Followers = getfollowers(db, user)
+
+	var rows *sql.Rows
+	if follows == 0 {
+		rows, err = db.Query(fmt.Sprintf("SELECT id, user_id, content, created_at FROM tweet WHERE user_id = %d ORDER BY id DESC LIMIT 100", user.ID))
+		checkErr(errors.Wrap(err, "failed to query"))
+		defer rows.Close()
+		tweets = scanTweets(rows)
+	} else {
+		rows, err = db.Query(fmt.Sprintf("SELECT id, user_id, content, created_at FROM tweet WHERE user_id IN (%s) ORDER BY id DESC LIMIT 100", inQuery))
+		checkErr(err)
+		defer rows.Close()
+		tw := scanTweets(rows)
+
+		rows2, err := db.Query(fmt.Sprintf("SELECT id, user_id, content, created_at FROM tweet WHERE user_id = %d ORDER BY id DESC LIMIT 100", user.ID))
+		checkErr(err)
+		defer rows2.Close()
+		tw = append(tw, scanTweets(rows2)...)
+		sort.Slice(tw, func(i, j int) bool {
+			return tw[i].ID < tw[j].ID
+		})
+		tweets = tw
 	}
 	content.Tweets = tweets
-
-	followStmt, err := db.Prepare("SELECT count(*) FROM follow WHERE user_id = ?")
-	checkErr(errors.Wrap(err, "failed to prepared statement"))
-	defer followStmt.Close()
-	followStmt.QueryRow(user.ID).Scan(&content.Following)
-
-	followerStmt, err := db.Prepare("SELECT count(*) FROM follow WHERE follow_id = ?")
-	checkErr(errors.Wrap(err, "failed to prepared statement"))
-	defer followerStmt.Close()
-	followerStmt.QueryRow(user.ID).Scan(&content.Followers)
 
 	tmpl := template.Must(template.ParseFiles("views/layout.tmpl", "views/index.tmpl"))
 	err = tmpl.Execute(w, content)
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to applies index template"))
 	}
+}
+
+func scanTweets(rows *sql.Rows) (tweets []*Tweet) {
+	for i := 0; rows.Next(); i++ {
+		t := &Tweet{}
+		err := rows.Scan(&t.ID, &t.UserID, &t.Content, &t.CreatedAt)
+		checkErr(errors.Wrap(err, "failed to query scan"))
+		tweets = append(tweets, t)
+	}
+	return
 }
 
 func getLogin(w http.ResponseWriter, r *http.Request) {
@@ -328,7 +400,7 @@ func userHandler(w http.ResponseWriter, r *http.Request, userID int) {
 
 	stmt, err := db.Prepare("SELECT t.id,  t.user_id,  u.name,  t.content,  t.created_at " +
 		"FROM tweet as t JOIN user as u " +
-		"WHERE t.user_id=u.id AND user_id = ? ORDER BY created_at DESC LIMIT 100")
+		"WHERE t.user_id=u.id AND user_id = ? ORDER BY t.created_at DESC LIMIT 100")
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to prepared statement"))
 		http.NotFound(w, r)
@@ -398,7 +470,7 @@ func getFollowing(w http.ResponseWriter, r *http.Request) {
 
 	db := getDB()
 
-	followingStmt, err := db.Prepare("SELECT user_id, follow_id, created_at FROM follow WHERE user_id = ?")
+	followingStmt, err := db.Prepare("SELECT f.user_id, f.follow_id, u.name, f.created_at FROM follow f INNER JOIN user u ON f.user_id=u.id WHERE f.user_id = ?")
 	defer followingStmt.Close()
 	checkErr(errors.Wrap(err, "failed to following prepared statement"))
 
@@ -411,15 +483,8 @@ func getFollowing(w http.ResponseWriter, r *http.Request) {
 	}
 	for i := 0; rows.Next(); i++ {
 		f := Following{}
-
-		// query from follow table
-		err := rows.Scan(&f.UserId, &f.FollowId, &f.CreatedAt)
+		err := rows.Scan(&f.UserId, &f.FollowId, &f.UserName, &f.CreatedAt)
 		checkErr(errors.Wrap(err, "failed to following query scan"))
-
-		// query from user table
-		err = db.QueryRow("SELECT name FROM user WHERE id = ?", f.FollowId).Scan(&f.UserName)
-		checkErr(errors.Wrap(err, "failed to user query scan"))
-
 		fc.FollowingList = append(fc.FollowingList, &f)
 	}
 
@@ -439,8 +504,7 @@ func getFollowers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := getDB()
-	stmt, err := db.Prepare("SELECT id, name, created_at " +
-		"FROM user WHERE id IN (SELECT user_id FROM follow WHERE follow_id=?)")
+	stmt, err := db.Prepare("SELECT id, name, created_at FROM user WHERE id IN (SELECT user_id FROM follow WHERE follow_id=?)")
 	if err != nil {
 		log.Println(errors.Wrap(err, "failed to prepared statement"))
 		http.NotFound(w, r)
@@ -492,6 +556,7 @@ func postFollow(w http.ResponseWriter, r *http.Request, id int) {
 
 	_, err = stmt.Exec(user.ID, id)
 	checkErr(errors.Wrap(err, "failed to exec insert follow"))
+	followerMap.add(id)
 
 	http.Redirect(w, r, "/", 302)
 }
