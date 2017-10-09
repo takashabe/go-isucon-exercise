@@ -9,11 +9,12 @@ import Dialog, {
   DialogTitle,
 } from 'material-ui/Dialog';
 
-const styles = {
+const styles = theme => ({
   root: {
+    marginTop: theme.spacing.unit * 3,
     textAlign: 'center',
   },
-};
+});
 
 class Enqueue extends React.Component {
   constructor() {
