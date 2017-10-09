@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "axios": "^0.16.2",
-    "material-ui": "^1.0.0-beta.13",
+    "material-ui": "^1.0.0-beta.16",
     "material-ui-icons": "^1.0.0-beta.15",
     "normalize.css": "^7.0.0",
     "react": "^15.6.2",
