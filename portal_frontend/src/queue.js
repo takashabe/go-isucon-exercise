@@ -33,12 +33,13 @@ const styles = theme => ({
     marginRight: 'auto',
     overflowX: 'auto',
   },
+  root: {
+    width: '90%',
+    marginTop: theme.spacing.unit * 3,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  },
 });
-
-const localStyles = {
-  width: '90%',
-  margin: 'auto',
-};
 
 function QueueAvatar(props) {
   const {classes} = props;
@@ -103,7 +104,7 @@ class Queues extends React.Component {
   render() {
     console.log('hogehoge from queues');
     return (
-      <div style={localStyles}>
+      <div className={this.props.classes.root}>
         <Typography type="display1">Active queues</Typography>
         <QueueAvatar data={this.state.activeQueues} />
       </div>
