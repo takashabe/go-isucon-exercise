@@ -1,5 +1,13 @@
 import React from 'react';
 import axios from 'axios';
+import Typography from 'material-ui/Typography';
+
+import HistoryTable from './table.js';
+
+const styles = {
+  width: '90%',
+  margin: 'auto',
+};
 
 export default class Score extends React.Component {
   constructor() {
@@ -15,55 +23,29 @@ export default class Score extends React.Component {
   }
 
   updateHistory() {
-    axios
-      .get('/api/history', {withCredentials: true})
-      .then(res => {
-        console.log(JSON.stringify(res.data));
-        this.setState({
-          history: res.data,
-        });
-      })
-      .catch(e => {
-        console.log(e);
+    axios.get('/api/history', {withCredentials: true}).then(res => {
+      this.setState({
+        history: res.data,
       });
-  }
-
-  handleDetail(id) {
-    axios
-      .get('/api/bench_detail/' + id, {withCredentials: true})
-      .then(res => {
-        console.log(JSON.stringify(res.data));
-        this.setState({
-          detail: res.data,
-        });
-      })
-      .catch(e => {
-        console.log(e);
-      });
+    });
   }
 
   render() {
-    const history = this.state.history.map(x => {
+    const data = this.state.history.map(x => {
       const timestamp = new Date(x.submitted_at * 1000);
-      return (
-        <li key={x.id} onClick={id => this.handleDetail(x.id)}>
-          Detail: {x.summary}-{x.score} at {timestamp.toLocaleString()}
-        </li>
-      );
+      return {
+        id: x.id,
+        summary: x.summary,
+        score: x.score,
+        timestamp: timestamp.toLocaleString(),
+      };
     });
-    // TODO: table layout
+
     return (
-      <div>
-        <ul>{history}</ul>
-        <Detail source={this.state.detail} />
+      <div style={styles}>
+        <Typography type="display1">Scores</Typography>
+        <HistoryTable data={data} />
       </div>
     );
-  }
-}
-
-class Detail extends React.Component {
-  render() {
-    console.log(this.props.detail);
-    return null;
   }
 }
