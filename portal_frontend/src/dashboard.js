@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 
 import Score from './score.js';
+import Enqueue from './enqueue.js';
 
 export default class Dashboard extends React.Component {
   render() {
@@ -9,6 +10,7 @@ export default class Dashboard extends React.Component {
       <div>
         Hello Dashboard
         <Queues />
+        <Enqueue />
         <Score />
       </div>
     );
