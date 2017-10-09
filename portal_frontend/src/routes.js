@@ -1,10 +1,12 @@
 import React from 'react';
 import {BrowserRouter, Route, Link, Redirect} from 'react-router-dom';
 import axios from 'axios';
+import 'normalize.css/normalize.css';
 
 import Login from './login.js';
 import Dashboard from './dashboard.js';
 import Enqueue from './enqueue.js';
+import Header from './header.js';
 
 export default class Routes extends React.Component {
   constructor() {
@@ -68,23 +70,6 @@ export default class Routes extends React.Component {
     );
   }
 }
-
-const Header = () => (
-  <div>
-    <p>Header</p>
-    <ul>
-      <li>
-        <Link to="/">Dashboard</Link>
-      </li>
-      <li>
-        <Link to="/login">Login</Link>
-      </li>
-      <li>
-        <Link to="/enqueue">Enqueue</Link>
-      </li>
-    </ul>
-  </div>
-);
 
 const PrivateRoute = ({component: Component, auth, ...rest}) => {
   return (
