@@ -88,21 +88,14 @@ class Queues extends React.Component {
   }
 
   handleQueues() {
-    axios
-      .get('/api/queues', {withCredentials: true})
-      .then(res => {
-        this.setState({
-          activeQueues: res.data,
-        });
-        console.log(res);
-      })
-      .catch(e => {
-        console.log(JSON.stringify(e.response.data));
+    axios.get('/api/queues', {withCredentials: true}).then(res => {
+      this.setState({
+        activeQueues: res.data,
       });
+    });
   }
 
   render() {
-    console.log('hogehoge from queues');
     return (
       <div className={this.props.classes.root}>
         <Typography type="display1">Active queues</Typography>
