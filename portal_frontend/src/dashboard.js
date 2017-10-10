@@ -42,7 +42,7 @@ export default class Dashboard extends React.Component {
         <Summary data={this.state.history} team={this.state.team} />
         <Queues />
         <Enqueue />
-        <Score />
+        <Score data={this.state.history} />
       </div>
     );
   }
