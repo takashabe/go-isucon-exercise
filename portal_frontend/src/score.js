@@ -25,7 +25,7 @@ const styles = theme => ({
 });
 
 const Score = props => {
-  const {classes, data, detail, detailOpen, detailClose} = props;
+  const {classes, data, detail, detailOpen} = props;
   const histories = data.map(x => {
     const timestamp = new Date(x.submitted_at * 1000);
     return {
@@ -60,11 +60,7 @@ const Score = props => {
             })}
           </TableBody>
         </Table>
-        <BenchDetail
-          detail={detail}
-          detailOpen={detailOpen}
-          detailClose={detailClose}
-        />
+        <BenchDetail detail={detail} />
       </Paper>
     </div>
   );
@@ -75,7 +71,6 @@ Score.prototype = {
   data: PropTypes.array.isRequired,
   detail: PropTypes.object.isRequired,
   detailOpen: PropTypes.func.isRequired,
-  detailClose: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(Score);

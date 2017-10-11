@@ -21,9 +21,6 @@ export default class Dashboard extends React.Component {
     };
 
     this.handleOnClickDetail = this.handleOnClickDetail.bind(this);
-    this.handleOnRequestDetailClose = this.handleOnRequestDetailClose.bind(
-      this,
-    );
   }
 
   componentWillMount() {
@@ -65,33 +62,21 @@ export default class Dashboard extends React.Component {
         };
       });
 
-  handleOnRequestDetailClose() {
-    this.setState({
-      detail: {
-        open: false,
-        message: '',
-        data: null,
-      },
-    });
+    this.setState({detail: state});
   }
 
   render() {
     return (
       <div>
-        <Summary
-          data={this.state.history}
-          team={this.state.team}
-          detail={this.state.detail}
-          detailOpen={this.handleOnClickDetail}
-          detailClose={this.handleOnRequestDetailClose}
-        />
+        {
+          //<Summary data={this.state.history} team={this.state.team} detail={this.state.detail} detailOpen={this.handleOnClickDetail} detailClose={this.handleOnRequestDetailClose} />
+        }
         <Queues />
         <Enqueue />
         <Score
           data={this.state.history}
           detail={this.state.detail}
           detailOpen={this.handleOnClickDetail}
-          detailClose={this.handleOnRequestDetailClose}
         />
       </div>
     );

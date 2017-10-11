@@ -15,99 +15,121 @@ import Dialog, {
   DialogTitle,
 } from 'material-ui/Dialog';
 
-const BenchDetail = props => {
-  const {detail, detailOpen, detailClose} = props;
-  let violations = (
-    <TableRow>
-      <TableCell>{'Empty violations. Your request is valid.'}</TableCell>
-    </TableRow>
-  );
+export default class BenchDetail extends React.Component {
+  constructor() {
+    super();
+    this.state = {
+      open: false,
+      message: '',
+      data: null,
+    };
 
-  let detailContent = '';
-  if (detail.data != null) {
-    if (detail.data.violations.length > 0) {
-      violations = detail.data.violations.map(x => {
-        return (
-          <TableRow key={x.request_type}>
-            <TableCell>{x.request_type}</TableCell>
-            <TableCell>{x.num}</TableCell>
-            <TableCell>{x.description}</TableCell>
-          </TableRow>
-        );
-      });
-    }
-
-    detailContent = (
-      <div>
-        <DialogContentText>Summary</DialogContentText>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Request count</TableCell>
-              <TableCell>Elapsed time</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell>{detail.request_count}</TableCell>
-              <TableCell>{detail.elapsed_time}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-
-        <DialogContentText>Count of response code</DialogContentText>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>2xx</TableCell>
-              <TableCell>3xx</TableCell>
-              <TableCell>4xx</TableCell>
-              <TableCell>5xx/timeout</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell>{detail.data.response.success}</TableCell>
-              <TableCell>{detail.data.response.redirect}</TableCell>
-              <TableCell>{detail.data.response.client_error}</TableCell>
-              <TableCell>
-                {detail.data.response.server_error +
-                  detail.data.response.exception}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-
-        <DialogContentText>Violations</DialogContentText>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Request type</TableCell>
-              <TableCell>Num</TableCell>
-              <TableCell>Description</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>{violations}</TableBody>
-        </Table>
-      </div>
-    );
+    this.hanldeOnRequestClose = this.hanldeOnRequestClose.bind(this);
   }
 
-  return (
-    <Dialog open={detail.open} onRequestClose={() => detailClose()}>
-      <DialogTitle>{'Detail'}</DialogTitle>
-      <DialogContent>
-        <DialogContentText>{detail.message}</DialogContentText>
-        {detailContent}
-      </DialogContent>
-    </Dialog>
-  );
-};
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      open: nextProps.detail.open,
+      message: nextProps.detail.message,
+      data: nextProps.detail.data,
+    });
+  }
+
+  hanldeOnRequestClose() {
+    this.setState({open: false});
+  }
+
+  render() {
+    const detail = this.state.data;
+    let violations = (
+      <TableRow>
+        <TableCell>{'Empty violations. Your request is valid.'}</TableCell>
+      </TableRow>
+    );
+
+    let detailContent = '';
+    if (detail != null) {
+      if (detail.violations.length > 0) {
+        violations = detail.violations.map(x => {
+          return (
+            <TableRow key={x.request_type}>
+              <TableCell>{x.request_type}</TableCell>
+              <TableCell>{x.num}</TableCell>
+              <TableCell>{x.description}</TableCell>
+            </TableRow>
+          );
+        });
+      }
+
+      detailContent = (
+        <div>
+          <DialogContentText>Summary</DialogContentText>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Request count</TableCell>
+                <TableCell>Elapsed time</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell>{detail.request_count}</TableCell>
+                <TableCell>{detail.elapsed_time}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+
+          <DialogContentText>Count of response code</DialogContentText>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>2xx</TableCell>
+                <TableCell>3xx</TableCell>
+                <TableCell>4xx</TableCell>
+                <TableCell>5xx/timeout</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell>{detail.response.success}</TableCell>
+                <TableCell>{detail.response.redirect}</TableCell>
+                <TableCell>{detail.response.client_error}</TableCell>
+                <TableCell>
+                  {detail.response.server_error + detail.response.exception}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+
+          <DialogContentText>Violations</DialogContentText>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Request type</TableCell>
+                <TableCell>Num</TableCell>
+                <TableCell>Description</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>{violations}</TableBody>
+          </Table>
+        </div>
+      );
+    }
+
+    return (
+      <Dialog
+        open={this.state.open}
+        onRequestClose={() => this.hanldeOnRequestClose()}>
+        <DialogTitle>{'Detail'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{this.state.message}</DialogContentText>
+          {detailContent}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+}
 
 BenchDetail.propTypes = {
-  detail: PropTypes.object,
-  detailOpen: PropTypes.func.isRequired,
-  detailClose: PropTypes.func.isRequired,
+  detail: PropTypes.object.isRequired,
 };
-
-export default BenchDetail;
