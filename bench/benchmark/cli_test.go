@@ -11,8 +11,8 @@ import (
 
 func TestParseArgs(t *testing.T) {
 	cli := &CLI{
-		outStream: new(bytes.Buffer),
-		errStream: new(bytes.Buffer),
+		OutStream: new(bytes.Buffer),
+		ErrStream: new(bytes.Buffer),
 	}
 	cases := []struct {
 		input       string
