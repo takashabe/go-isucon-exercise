@@ -46,28 +46,23 @@ export default class Dashboard extends React.Component {
     });
   }
 
-  handleOnClickDetail(id) {
-    axios
+  async handleOnClickDetail(id) {
+    const state = await axios
       .get('/api/bench_detail/' + id, {withCredentials: true})
       .then(res => {
-        this.setState({
-          detail: {
-            open: true,
-            message: '',
-            data: JSON.parse(res.data.detail),
-          },
-        });
+        return {
+          open: true,
+          message: '',
+          data: JSON.parse(res.data.detail),
+        };
       })
       .catch(e => {
-        this.setState({
-          detail: {
-            open: true,
-            message: 'Failed to receive detail score',
-            data: null,
-          },
-        });
+        return {
+          open: true,
+          message: 'Failed to receive detail score',
+          data: null,
+        };
       });
-  }
 
   handleOnRequestDetailClose() {
     this.setState({
