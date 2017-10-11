@@ -1,6 +1,5 @@
 import React from 'react';
 import axios from 'axios';
-
 import {withStyles} from 'material-ui/styles';
 import Button from 'material-ui/Button';
 import Dialog, {
@@ -21,7 +20,7 @@ class Enqueue extends React.Component {
     super();
     this.state = {
       open: false,
-      message: null,
+      message: '',
     };
 
     this.handleOnRequestClose = this.handleOnRequestClose.bind(this);
@@ -45,13 +44,16 @@ class Enqueue extends React.Component {
         this.setState({
           open: true,
           message:
-            'Failed to send request queue. Receive error message:' +
+            'Failed to send request queue. Receive error message:\n' +
             JSON.stringify(e.response.data),
         });
       });
   }
 
   render() {
+    const message = this.state.message.split('\n').map(x => {
+      return <DialogContentText key={x}>{x}</DialogContentText>;
+    });
     return (
       <div className={this.props.classes.root}>
         <Button raised color="primary" onClick={this.handleOnClick}>
@@ -61,9 +63,7 @@ class Enqueue extends React.Component {
           open={this.state.open}
           onRequestClose={this.handleOnRequestClose}>
           <DialogTitle>{'Enqueue'}</DialogTitle>
-          <DialogContent>
-            <DialogContentText>{this.state.message}</DialogContentText>
-          </DialogContent>
+          <DialogContent>{message}</DialogContent>
         </Dialog>
       </div>
     );
