@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import 'babel-polyfill';
 
 import Summary from './summary.js';
 import Queues from './queue.js';
