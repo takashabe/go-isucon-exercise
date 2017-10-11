@@ -48,11 +48,16 @@ const Score = props => {
           </TableHead>
           <TableBody>
             {data.map(n => {
+              let timestamp = new Date(n.submitted_at * 1000);
               return (
                 <TableRow key={n.id} hover onClick={() => detailOpen(n.id)}>
                   <TableCell>{n.summary}</TableCell>
                   <TableCell numeric>{n.score}</TableCell>
-                  <TableCell>{n.timestamp}</TableCell>
+                  <TableCell>
+                    {timestamp.toLocaleDateString() +
+                      ' ' +
+                      timestamp.toTimeString()}
+                  </TableCell>
                 </TableRow>
               );
             })}

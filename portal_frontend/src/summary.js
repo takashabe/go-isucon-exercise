@@ -51,13 +51,16 @@ class Summary extends React.Component {
         </TableRow>
       );
     }
+    let timestamp = new Date(data.submitted_at * 1000);
     const {detailOpen} = this.props;
     return (
       <TableRow hover onClick={() => detailOpen(data.id)}>
         <TableCell padding="dense">{label}</TableCell>
         <TableCell>{data.summary}</TableCell>
         <TableCell>{data.score}</TableCell>
-        <TableCell>{data.submitted_at}</TableCell>
+        <TableCell>
+          {timestamp.toLocaleDateString() + ' ' + timestamp.toTimeString()}
+        </TableCell>
       </TableRow>
     );
   }
