@@ -2,48 +2,51 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {Redirect} from 'react-router-dom';
 import axios from 'axios';
+import Input, {InputLabel} from 'material-ui/Input';
+import {FormControl, FormHelperText} from 'material-ui/Form';
+import PropTypes from 'prop-types';
+import {withStyles} from 'material-ui/styles';
+import Typography from 'material-ui/Typography';
+import Button from 'material-ui/Button';
 
-export default class Login extends React.Component {
+const styles = theme => ({
+  root: {
+    margin: theme.spacing.unit * 3,
+  },
+  formControl: {
+    margin: theme.spacing.unit,
+  },
+});
+
+class Login extends React.Component {
   constructor() {
     super();
     this.state = {
       inputId: null,
       inputPass: null,
       authed: false,
-      message: null,
+      failMessage: null,
     };
+
+    this.handleClick = this.handleClick.bind(this);
   }
 
-  handleInput(e) {
-    const target = e.target;
+  handleChange(event) {
+    const target = event.target;
     const value = target.value;
-    const name = target.name;
+    const id = target.id;
 
     this.setState({
-      [name]: value,
+      [id]: value,
     });
   }
 
-  handleSubmit(e) {
-    e.preventDefault();
-
-    const id = this.state.inputId;
-    const pass = this.state.inputPass;
-    if (!id) {
-      this.setState({
-        message: 'require TeamID',
-      });
-      return;
-    } else if (!pass) {
-      this.setState({
-        message: 'require Password',
-      });
-      return;
-    }
+  handleClick(event) {
+    event.preventDefault();
 
     let params = new URLSearchParams();
-    params.append('email', id);
-    params.append('password', pass);
+    params.append('email', this.state.inputId);
+    params.append('password', this.state.inputPass);
 
     axios
       .post('/api/login', params, {withCredentials: true})
@@ -55,39 +58,55 @@ export default class Login extends React.Component {
         this.props.updateSession(false);
         this.setState({
           authed: false,
-          message: 'Incorrect team id or password',
+          failMessage: 'Incorrect team id or password',
         });
       });
   }
 
   render() {
-    let component;
-    if (this.state.authed) {
-      component = <Redirect push to={'/'} />;
-    } else {
-      component = (
-        <div className="login">
-          <p>{this.state.message}</p>
-          Login
-          <form className="loginForm" onSubmit={e => this.handleSubmit(e)}>
-            Team ID:
-            <input
-              type="text"
-              name="inputId"
-              onChange={e => this.handleInput(e)}
-            />
-            Password:
-            <input
-              type="text"
-              name="inputPass"
-              onChange={e => this.handleInput(e)}
-            />
-            <input type="submit" value="Submit" />
-          </form>
+    const {classes, updateSession} = this.props;
+    const message =
+      this.state.failMessage !== null ? (
+        <Typography color="error" type="subheading">
+          {this.state.failMessage}
+        </Typography>
+      ) : (
+        ''
+      );
+
+    const component =
+      this.state.authed === true ? (
+        <Redirect push to={'/'} />
+      ) : (
+        <div className={classes.root}>
+          {message}
+          <div className={classes.container}>
+            <FormControl className={classes.formControl}>
+              <InputLabel shrink>Email</InputLabel>
+              <Input id="inputId" onChange={e => this.handleChange(e)} />
+            </FormControl>
+            <FormControl className={classes.formControl}>
+              <InputLabel shrink>Password</InputLabel>
+              <Input
+                id="inputPass"
+                type="password"
+                onChange={e => this.handleChange(e)}
+              />
+            </FormControl>
+            <Button raised color="primary" onClick={e => this.handleClick(e)}>
+              Enqueue
+            </Button>
+          </div>
         </div>
       );
-    }
 
     return <div>{component}</div>;
   }
 }
+
+Login.propTypes = {
+  classes: PropTypes.object.isRequired,
+  updateSession: PropTypes.func.isRequired,
+};
+
+export default withStyles(styles)(Login);
