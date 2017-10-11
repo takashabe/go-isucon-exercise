@@ -10,7 +10,7 @@ import (
 type Result struct {
 	Valid        bool             `json:"valid"`
 	RequestCount int              `json:"request_count"`
-	ElapsedTime  int              `json:"elapsed_time"`
+	ElapsedTime  int64            `json:"elapsed_time"`
 	Response     *ResponseCounter `json:"response"`
 	Violations   []*Violation     `json:"violations"`
 	mu           sync.Mutex       `json:"-"`

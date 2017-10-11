@@ -112,6 +112,7 @@ func (d *Driver) requestAndCheck(path, requestName string, req *http.Request, cl
 	time := bench.End()
 
 	d.result.addResponse(res.StatusCode)
+	d.result.ElapsedTime = time.Nanoseconds()
 	if check != nil {
 		check(&Checker{
 			ctx:          d.ctx,
