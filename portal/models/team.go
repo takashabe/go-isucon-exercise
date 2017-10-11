@@ -2,9 +2,9 @@ package models
 
 // Team represent team configuration
 type Team struct {
-	ID       int
-	Name     string
-	Instance string
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Instance string `json:"instance"`
 }
 
 // NewTeam returns initialized Team object

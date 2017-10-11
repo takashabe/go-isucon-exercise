@@ -94,7 +94,7 @@ func TestGetTeam(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want non error, got %v", err)
 	}
-	expect := []byte(`{"ID":1,"Name":"team1","Instance":"localhost:8080"}`)
+	expect := []byte(`{"id":1,"name":"team1","instance":"localhost:8080"}`)
 	if !reflect.DeepEqual(expect, payload) {
 		t.Errorf("want %s, got %s", expect, payload)
 	}
