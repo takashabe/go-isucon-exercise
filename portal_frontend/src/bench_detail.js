@@ -61,6 +61,8 @@ class BenchDetail extends React.Component {
         });
       }
 
+      // nanoseconds -> seconds
+      const elapsedTime = Math.floor(detail.elapsed_time / 1000000000);
       detailContent = (
         <div>
           <DialogContentText>Summary</DialogContentText>
@@ -68,13 +70,13 @@ class BenchDetail extends React.Component {
             <TableHead>
               <TableRow>
                 <TableCell>Request count</TableCell>
-                <TableCell>Elapsed time</TableCell>
+                <TableCell>Elapsed time(second)</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
                 <TableCell>{detail.request_count}</TableCell>
-                <TableCell>{detail.elapsed_time}</TableCell>
+                <TableCell>{elapsedTime}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
