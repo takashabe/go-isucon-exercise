@@ -82,9 +82,9 @@ class Summary extends React.Component {
     const teamRow =
       team !== null ? (
         <TableRow>
-          <TableCell>{team.ID}</TableCell>
-          <TableCell>{team.Name}</TableCell>
-          <TableCell>{team.Instance}</TableCell>
+          <TableCell>{team.id}</TableCell>
+          <TableCell>{team.name}</TableCell>
+          <TableCell>{team.instance}</TableCell>
         </TableRow>
       ) : (
         <TableRow>
