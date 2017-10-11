@@ -51,8 +51,9 @@ class Summary extends React.Component {
         </TableRow>
       );
     }
+    const {detailOpen} = this.props;
     return (
-      <TableRow>
+      <TableRow hover onClick={() => detailOpen(data.id)}>
         <TableCell padding="dense">{label}</TableCell>
         <TableCell>{data.summary}</TableCell>
         <TableCell>{data.score}</TableCell>
@@ -139,6 +140,9 @@ Summary.propTypes = {
   classes: PropTypes.object.isRequired,
   data: PropTypes.array.isRequired,
   team: PropTypes.object,
+  detail: PropTypes.object.isRequired,
+  detailOpen: PropTypes.func.isRequired,
+  detailClose: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(Summary);
