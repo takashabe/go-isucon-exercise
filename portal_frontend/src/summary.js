@@ -140,9 +140,7 @@ Summary.propTypes = {
   classes: PropTypes.object.isRequired,
   data: PropTypes.array.isRequired,
   team: PropTypes.object,
-  detail: PropTypes.object.isRequired,
   detailOpen: PropTypes.func.isRequired,
-  detailClose: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(Summary);

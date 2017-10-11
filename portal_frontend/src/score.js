@@ -11,8 +11,6 @@ import Table, {
 import Paper from 'material-ui/Paper';
 import {withStyles} from 'material-ui/styles';
 
-import BenchDetail from './bench_detail.js';
-
 const styles = theme => ({
   root: {
     width: '90%',
@@ -25,7 +23,7 @@ const styles = theme => ({
 });
 
 const Score = props => {
-  const {classes, data, detail, detailOpen} = props;
+  const {classes, data, detailOpen} = props;
   const histories = data.map(x => {
     const timestamp = new Date(x.submitted_at * 1000);
     return {
@@ -60,7 +58,6 @@ const Score = props => {
             })}
           </TableBody>
         </Table>
-        <BenchDetail detail={detail} />
       </Paper>
     </div>
   );
@@ -69,7 +66,6 @@ const Score = props => {
 Score.prototype = {
   classes: PropTypes.object.isRequired,
   data: PropTypes.array.isRequired,
-  detail: PropTypes.object.isRequired,
   detailOpen: PropTypes.func.isRequired,
 };
 

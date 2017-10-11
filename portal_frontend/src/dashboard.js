@@ -6,6 +6,7 @@ import Summary from './summary.js';
 import Queues from './queue.js';
 import Score from './score.js';
 import Enqueue from './enqueue.js';
+import BenchDetail from './bench_detail.js';
 
 export default class Dashboard extends React.Component {
   constructor() {
@@ -68,16 +69,18 @@ export default class Dashboard extends React.Component {
   render() {
     return (
       <div>
-        {
-          //<Summary data={this.state.history} team={this.state.team} detail={this.state.detail} detailOpen={this.handleOnClickDetail} detailClose={this.handleOnRequestDetailClose} />
-        }
+        <Summary
+          data={this.state.history}
+          team={this.state.team}
+          detailOpen={this.handleOnClickDetail}
+        />
         <Queues />
         <Enqueue />
         <Score
           data={this.state.history}
-          detail={this.state.detail}
           detailOpen={this.handleOnClickDetail}
         />
+        <BenchDetail detail={this.state.detail} />
       </div>
     );
   }
