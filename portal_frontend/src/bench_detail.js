@@ -15,7 +15,7 @@ import Dialog, {
   DialogTitle,
 } from 'material-ui/Dialog';
 
-export default class BenchDetail extends React.Component {
+class BenchDetail extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -118,6 +118,7 @@ export default class BenchDetail extends React.Component {
 
     return (
       <Dialog
+        maxWidth="md"
         open={this.state.open}
         onRequestClose={() => this.hanldeOnRequestClose()}>
         <DialogTitle>{'Detail'}</DialogTitle>
@@ -133,3 +134,5 @@ export default class BenchDetail extends React.Component {
 BenchDetail.propTypes = {
   detail: PropTypes.object.isRequired,
 };
+
+export default BenchDetail;
