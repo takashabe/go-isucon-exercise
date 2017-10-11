@@ -1,4 +1,4 @@
-package main
+package benchmark
 
 import (
 	"flag"
@@ -49,8 +49,8 @@ type param struct {
 
 // CLI is the command line interface object
 type CLI struct {
-	outStream io.Writer
-	errStream io.Writer
+	OutStream io.Writer
+	ErrStream io.Writer
 }
 
 // Run invokes the CLI with the given arguments
@@ -58,28 +58,28 @@ func (c *CLI) Run(args []string) int {
 	param := &param{}
 	err := c.parseArgs(args[1:], param)
 	if err != nil {
-		fmt.Fprintf(c.errStream, "args parse error: %#v", err)
+		fmt.Fprintf(c.ErrStream, "args parse error: %#v", err)
 		return ExitCodeParseError
 	}
 
 	master, err := NewMaster(param.host, param.port, param.file, param.agent)
 	if err != nil {
-		fmt.Fprintf(c.errStream, "invalid args. failed to initialize master: %#v", err)
+		fmt.Fprintf(c.ErrStream, "invalid args. failed to initialize master: %#v", err)
 		return ExitCodeInvalidArgsError
 	}
 
 	result, err := master.start()
 	if err != nil {
-		fmt.Fprintf(c.errStream, "failed to benchmark run: %#v", err)
+		fmt.Fprintf(c.ErrStream, "failed to benchmark run: %#v", err)
 		return ExitCodeError
 	}
-	fmt.Fprintln(c.outStream, result)
+	fmt.Fprintln(c.OutStream, result)
 	return ExitCodeOK
 }
 
 func (c *CLI) parseArgs(args []string, p *param) error {
 	flags := flag.NewFlagSet("bench", flag.ContinueOnError)
-	flags.SetOutput(c.errStream)
+	flags.SetOutput(c.ErrStream)
 
 	flags.StringVar(&p.file, "file", defaultFile, "")
 	flags.IntVar(&p.port, "port", defaultPort, "")

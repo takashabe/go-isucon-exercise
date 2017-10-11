@@ -1,4 +1,4 @@
-package main
+package benchmark
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func IsuconWorkOrder() []*WorkOrder {
 	order := []*WorkOrder{
 		{30 * time.Second, []Task{&InitTask{}}},
 		{30 * time.Second, []Task{&BootstrapTask{}}},
-		{60 * time.Second, []Task{&LoadTask{}, &LoadTask{}, &LoadCheckerTask{}}},
+		{2 * time.Second, []Task{&LoadTask{}, &LoadTask{}, &LoadCheckerTask{}}},
 	}
 	return order
 }

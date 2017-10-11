@@ -1,4 +1,4 @@
-package main
+package benchmark
 
 // InitTask is initialize
 type InitTask struct{}
