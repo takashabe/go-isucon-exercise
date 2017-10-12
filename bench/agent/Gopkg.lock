@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/takashabe/go-pubsub"
   packages = ["client","datastore","models","server","stats"]
-  revision = "8cc935a8cf3c2dd548d8e550cf26e064fbac1a9b"
+  revision = "f94c0c481514098acdb996052e25e38a865b280b"
 
 [[projects]]
   branch = "master"
