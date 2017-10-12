@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/takashabe/go-message-queue/client"
-	"github.com/takashabe/go-message-queue/server"
+	"github.com/takashabe/go-pubsub/client"
+	"github.com/takashabe/go-pubsub/server"
 )
 
 func setupPubsubServer(t *testing.T) *httptest.Server {
