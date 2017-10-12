@@ -51,15 +51,15 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/takashabe/go-message-queue"
-  packages = ["client","datastore","models","server","stats"]
-  revision = "d3d353190270ec364c907789caba7f7bca14a87a"
-
-[[projects]]
-  branch = "master"
   name = "github.com/takashabe/go-metrics"
   packages = ["collect","forward"]
   revision = "d402cb672628e08db2ecba0504331819d367856b"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/takashabe/go-pubsub"
+  packages = ["client","datastore","models","server","stats"]
+  revision = "8cc935a8cf3c2dd548d8e550cf26e064fbac1a9b"
 
 [[projects]]
   branch = "master"
@@ -77,7 +77,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "314a259e304ff91bd6985da2a7149bbf91237993"
+  revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
 
 [[projects]]
   branch = "v2"
@@ -88,6 +88,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0f80a760bf74c854e56cb83bed817e54ada60474f1ba1df1908578aaa7f043b"
+  inputs-digest = "7476f5a62414f03abedcfbcbba2a499cc03bc783080e7a1897443a798b01ddc7"
   solver-name = "gps-cdcl"
   solver-version = 1

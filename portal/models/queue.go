@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/client"
+	"github.com/takashabe/go-pubsub/client"
 )
 
 // pubsub server names

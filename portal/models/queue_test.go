@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/takashabe/go-message-queue/client"
+	"github.com/takashabe/go-pubsub/client"
 )
 
 func publishDummyBenchmarkResult(t *testing.T, ts *httptest.Server, teamID int, msgID string, payload []byte) {

@@ -7,7 +7,7 @@ import (
 
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
-	"github.com/takashabe/go-message-queue/server"
+	"github.com/takashabe/go-pubsub/server"
 )
 
 func setupFixture(t *testing.T, files ...string) {
