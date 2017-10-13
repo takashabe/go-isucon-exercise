@@ -34,8 +34,8 @@
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -53,7 +53,7 @@
   branch = "master"
   name = "github.com/takashabe/go-router"
   packages = ["."]
-  revision = "51eb62e3acb5ef5b1831667ba06cb0c9ae8c7c8e"
+  revision = "14d0ee820920323db00265c07549252595a467ee"
 
 [[projects]]
   branch = "master"
@@ -64,14 +64,14 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["html","html/atom"]
-  revision = "8351a756f30f1297fe94bbf4b767ec589c6ea6d0"
+  packages = ["html","html/atom","netutil"]
+  revision = "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "062cd7e4e68206d8bab9b18396626e855c992658"
+  revision = "43eea11bc92608addb41b8a406b0407495c106f6"
 
 [[projects]]
   branch = "v2"
@@ -82,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b1b356f67e98316779840ad4ad9ee5bf7d66a0efc867049c80c26cf71d6d11d9"
+  inputs-digest = "442f282ec95459f294a8be0d3c74049637bb6718b6e6ade2d4baca4c018173c5"
   solver-name = "gps-cdcl"
   solver-version = 1
