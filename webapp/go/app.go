@@ -527,7 +527,7 @@ func main() {
 	r.Post("/tweet", postTweet)
 	r.Post("/follow/:id", postFollow)
 
-	r.ServeFile("/css/*filepath", http.Dir("static/css"))
+	r.ServeDir("/css/*filepath", http.Dir("static/css"))
 
 	log.Println("running server...")
 	r.PrintRoutes(os.Stdout)
