@@ -16,12 +16,7 @@ import (
 	"github.com/takashabe/go-router"
 )
 
-// Test Server
-type TestServer struct {
-	db *sql.DB
-}
-
-func (s *TestServer) NewDB() (*sql.DB, error) {
+func setupTets() (*sql.DB, error) {
 	db, err := sql.Open("mysql", "isucon@/isucon_test?parseTime=true")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open database")
@@ -46,13 +41,7 @@ func newRouter() http.Handler {
 	return r
 }
 
-func LoadFixture(t *testing.T) {
-	db, err := sql.Open("mysql", "isucon@/isucon_test")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	defer db.Close()
-
+func LoadFixture(t *testing.T, db *sql.DB) {
 	f, err := fixture.NewFixture(db, "mysql")
 	if err != nil {
 		t.Fatalf("want non error, got %#v", err)
@@ -67,14 +56,12 @@ func LoadFixture(t *testing.T) {
 }
 
 func setupDB(t *testing.T) {
-	LoadFixture(t)
-	server := &TestServer{}
-	db, err := server.NewDB()
+	db, err := sql.Open("mysql", "isucon@/isucon_test?parseTime=true")
 	if err != nil {
-		t.Fatal(err.Error())
+		t.Fatalf("want non error, got %v", err)
 	}
-	server.db = db
-	helper = server
+	LoadFixture(t, db)
+	gdb = db
 }
 
 func getDummyLoginParams() url.Values {
@@ -142,8 +129,9 @@ func TestLoginPost(t *testing.T) {
 		client := notRedirectClient()
 		resp, err := client.PostForm(ts.URL+"/login", c.input)
 		if err != nil {
-			t.Errorf("#%d: want no error, got %v", i, err.Error())
+			t.Errorf("#%d: want no error, got %v", i, err)
 		}
+		defer resp.Body.Close()
 		if c.expectStatusCode != resp.StatusCode {
 			t.Errorf("#%d: want %d, got %d", i, c.expectStatusCode, resp.StatusCode)
 		}
