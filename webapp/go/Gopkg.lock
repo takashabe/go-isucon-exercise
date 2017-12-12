@@ -65,19 +65,19 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["html","html/atom","netutil"]
-  revision = "a04bdaca5b32abe1c069418fb7088ae607de5bd0"
+  revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "43eea11bc92608addb41b8a406b0407495c106f6"
+  revision = "53aa286056ef226755cd898109dbcdaba8ac0b81"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "287cf08546ab5e7e37d55a84f7ed3fd1db036de5"
 
 [solve-meta]
   analyzer-name = "dep"
