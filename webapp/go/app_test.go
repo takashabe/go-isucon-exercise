@@ -53,11 +53,17 @@ func LoadFixture(t *testing.T) {
 	}
 	defer db.Close()
 
-	f := fixture.NewFixture(db, "mysql")
-	f.LoadSQL("fixture/create.sql")
-	f.Load("fixture/user.yml")
-	f.Load("fixture/tweet.yml")
-	f.Load("fixture/follow.yml")
+	f, err := fixture.NewFixture(db, "mysql")
+	if err != nil {
+		t.Fatalf("want non error, got %#v", err)
+	}
+	err = f.LoadSQL("fixture/create.sql")
+	err = f.Load("fixture/user.yml")
+	err = f.Load("fixture/tweet.yml")
+	err = f.Load("fixture/follow.yml")
+	if err != nil {
+		t.Fatalf("want non error, got %#v", err)
+	}
 }
 
 func setupDB(t *testing.T) {
