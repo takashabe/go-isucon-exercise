@@ -15,7 +15,10 @@ func setupFixture(t *testing.T, files ...string) {
 	if err != nil {
 		t.Fatalf("want non nil, got %v", err)
 	}
-	f := fixture.NewFixture(db.Conn, "mysql")
+	f, err := fixture.NewFixture(db.Conn, "mysql")
+	if err != nil {
+		t.Fatalf("want non nil, got %v", err)
+	}
 	// always necessary file
 	err = f.LoadSQL("fixture/schema.sql")
 	if err != nil {
