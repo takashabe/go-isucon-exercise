@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "433969511232c397de61b1442f9fd49ec06ae9ba"
-  version = "v1.1.0"
+  revision = "47dc60e71eed504e3ef8e77ee3c6fe720f3be57f"
+  version = "v1.3.0"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -47,25 +47,25 @@
   branch = "master"
   name = "github.com/takashabe/go-fixture"
   packages = [".","mysql"]
-  revision = "b49815f9e2d103367791be3eade174a4f7b20460"
+  revision = "5392a35a25fcdc7e3ef2899859c9273e05600330"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-metrics"
   packages = ["collect","forward"]
-  revision = "d402cb672628e08db2ecba0504331819d367856b"
+  revision = "ec773daf2b6e080eeade29c9a5a0ea1e5376eeaa"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-pubsub"
   packages = ["client","datastore","models","server","stats"]
-  revision = "f94c0c481514098acdb996052e25e38a865b280b"
+  revision = "556ef9ff559ce0c15e9be3cdceb4c33bc12adaf2"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-router"
   packages = ["."]
-  revision = "14d0ee820920323db00265c07549252595a467ee"
+  revision = "867abe915b8bc34ea891d8224e6369a69beeb188"
 
 [[projects]]
   branch = "master"
@@ -77,13 +77,13 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "ebfc5b4631820b793c9010c87fd8fef0f39eb082"
+  revision = "53aa286056ef226755cd898109dbcdaba8ac0b81"
 
 [[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "287cf08546ab5e7e37d55a84f7ed3fd1db036de5"
 
 [solve-meta]
   analyzer-name = "dep"
